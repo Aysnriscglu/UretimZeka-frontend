@@ -50,14 +50,26 @@ const parseNumber = (val: any) => {
 
 const getKey = (obj: any, possibleKeys: string[]) => {
   if (!obj) return undefined;
-  const foundKey = Object.keys(obj).find(k => {
+  
+  const exactMatch = Object.keys(obj).find(k => {
     const cleanK = k.toLowerCase().replace(/[\s\*\-\_\(\)\[\]]/g, '');
     return possibleKeys.some(pk => {
        const cleanPk = pk.toLowerCase().replace(/[\s\*\-\_\(\)\[\]]/g, '');
-       return cleanK === cleanPk || cleanK.includes(cleanPk);
+       return cleanK === cleanPk;
     });
   });
-  return foundKey ? obj[foundKey] : undefined;
+  
+  if (exactMatch) return obj[exactMatch];
+
+  const includesMatch = Object.keys(obj).find(k => {
+    const cleanK = k.toLowerCase().replace(/[\s\*\-\_\(\)\[\]]/g, '');
+    return possibleKeys.some(pk => {
+       const cleanPk = pk.toLowerCase().replace(/[\s\*\-\_\(\)\[\]]/g, '');
+       return cleanK.includes(cleanPk);
+    });
+  });
+  
+  return includesMatch ? obj[includesMatch] : undefined;
 };
 
 // Excel'deki Is Merkezi isimlerini bizim makine isimlerimize cevir
