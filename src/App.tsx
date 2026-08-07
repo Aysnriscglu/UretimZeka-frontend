@@ -21,7 +21,6 @@ import "./App.css";
 
 import DigitalFactory from "./pages/DigitalFactory";
 import AI from "./pages/AI";
-import IntroVideo from "./compenents/IntroVideo";
 
 const menuItems = [
   { name: "Opex", icon: Home },
@@ -80,7 +79,6 @@ function App() {
 
   return (
     <div className="app-container">
-      <IntroVideo />
       <aside className="sidebar">
         <div className="logo" style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
           <img src="/opex-logo.png" alt="OPEX Jantsa" style={{ width: '100%', maxWidth: '200px', height: 'auto' }} />
