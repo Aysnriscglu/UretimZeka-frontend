@@ -105,6 +105,13 @@ function DigitalFactory() {
               if (hurdaMiktar) totalScrap += Number(hurdaMiktar) || 0;
 
               if (mappedMachine && parsedMachines[mappedMachine]) {
+                 if (uretim) {
+                    parsedMachines[mappedMachine].machineProduction = (parsedMachines[mappedMachine].machineProduction || 0) + (Number(uretim) || 0);
+                 }
+                 if (hurdaMiktar) {
+                    parsedMachines[mappedMachine].machineScrap = (parsedMachines[mappedMachine].machineScrap || 0) + (Number(hurdaMiktar) || 0);
+                 }
+
                 const hurdaSebep = getKey(row, ["Hurda", "Hurda Kodu", "Sebep"]);
                 const tarih = getKey(row, ["Tarih", "Zaman"]);
                 
@@ -121,7 +128,32 @@ function DigitalFactory() {
 
           // Process and aggregate scrap records for each machine
           Object.keys(parsedMachines).forEach(key => {
-             const records = parsedMachines[key].scrapRecords;
+             const machine = parsedMachines[key];
+             const records = machine.scrapRecords;
+             
+             // Hesaplama
+             if (machine.machineProduction > 0) {
+                 const scrapRate = (machine.machineScrap || 0) / machine.machineProduction;
+                 // Hurda oranına göre skor hesapla (Örn: %10 hurda = %90 performans)
+                 // Hurda oranını biraz daha cezalandırmak için * 2 yapabiliriz, standart tutalım:
+                 let calculatedScore = 100 - Math.round(scrapRate * 100);
+                 if (calculatedScore < 0) calculatedScore = 0;
+                 if (calculatedScore > 100) calculatedScore = 100;
+                 
+                 machine.score = calculatedScore;
+                 
+                 if (calculatedScore >= 85) {
+                     machine.status = "NORMAL";
+                     machine.statusColor = "#10b981";
+                 } else if (calculatedScore >= 60) {
+                     machine.status = "UYARI";
+                     machine.statusColor = "#f59e0b";
+                 } else {
+                     machine.status = "KRİTİK";
+                     machine.statusColor = "#ef4444";
+                 }
+             }
+
              if (records.length > 0) {
                 // Group by reason to find top scrap issues
                 const grouped = records.reduce((acc: any, curr: any) => {
@@ -135,8 +167,8 @@ function DigitalFactory() {
                    .sort((a, b) => b.amount - a.amount)
                    .slice(0, 3); // Top 3 reasons
                    
-                parsedMachines[key].topScraps = sortedScraps;
-                parsedMachines[key].totalMachineScrap = records.reduce((sum: number, r: any) => sum + r.amount, 0);
+                machine.topScraps = sortedScraps;
+                machine.totalMachineScrap = records.reduce((sum: number, r: any) => sum + r.amount, 0);
              }
           });
 
@@ -236,6 +268,16 @@ function DigitalFactory() {
             </span>
           </div>
 
+          <div className="risk-card">
+            <span className="risk-title">Risk Puanı / Performans</span>
+            <div className="risk-score">
+              <span style={{ color: data.statusColor }}>{data.score}</span>
+              <small>/100</small>
+            </div>
+            <div className="risk-bar" style={{ background: "#1b2d45" }}>
+              <div className="risk-value" style={{ width: `${data.score}%`, background: data.statusColor }}></div>
+            </div>
+          </div>
 
           <div className="info-item" style={{ display: "flex", alignItems: "center", gap: 8, color: data.statusColor, marginTop: 14 }}>
             <IssueIcon size={16} /> {data.issue}
