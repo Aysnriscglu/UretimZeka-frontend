@@ -105,10 +105,15 @@ function DigitalFactory() {
               const hurdaMiktar = getKey(row, ["Hurda Miktarı", "Hurda Miktari"]);
               if (hurdaMiktar) totalScrap += Number(hurdaMiktar) || 0;
 
-              const durusSuresi = getKey(row, ["Duruş", "Durus", "Duruş Süresi", "Durus Suresi", "Downtime"]);
+              const durusSuresi = getKey(row, ["Toplam Süre(dk)", "Toplam Süre", "Duruş", "Durus", "Duruş Süresi", "Durus Suresi", "Downtime"]);
+              const durusNedeni = getKey(row, ["Duruş Nedeni", "Durus Nedeni", "Duruş Tipi", "Çağrı Nedeni", "Sebep"]);
               if (durusSuresi) totalDowntime += Number(durusSuresi) || 0;
 
               if (mappedMachine && parsedMachines[mappedMachine]) {
+                 if (!parsedMachines[mappedMachine].downtimeRecords) {
+                    parsedMachines[mappedMachine].downtimeRecords = [];
+                 }
+                 
                  if (uretim) {
                     parsedMachines[mappedMachine].machineProduction = (parsedMachines[mappedMachine].machineProduction || 0) + (Number(uretim) || 0);
                  }
@@ -120,13 +125,21 @@ function DigitalFactory() {
                     parsedMachines[mappedMachine].machineDowntime = (parsedMachines[mappedMachine].machineDowntime || 0) + (Number(durusSuresi) || 0);
                  }
 
-                const hurdaSebep = getKey(row, ["Hurda", "Hurda Kodu", "Sebep"]);
+                const hurdaSebep = getKey(row, ["Hurda", "Hurda Kodu", "Hurda Sebebi"]);
                 const tarih = getKey(row, ["Tarih", "Zaman"]);
                 
                 if (hurdaSebep && hurdaMiktar) {
                    parsedMachines[mappedMachine].scrapRecords.push({
                       reason: hurdaSebep,
                       amount: Number(hurdaMiktar),
+                      date: tarih ? String(tarih).split(' ')[0] : 'Bilinmiyor'
+                   });
+                }
+                
+                if (durusNedeni && durusSuresi) {
+                   parsedMachines[mappedMachine].downtimeRecords.push({
+                      reason: durusNedeni,
+                      amount: Number(durusSuresi),
                       date: tarih ? String(tarih).split(' ')[0] : 'Bilinmiyor'
                    });
                 }
@@ -138,6 +151,7 @@ function DigitalFactory() {
           Object.keys(parsedMachines).forEach(key => {
              const machine = parsedMachines[key];
              const records = machine.scrapRecords;
+             const dRecords = machine.downtimeRecords || [];
              
              // Hesaplama
              if (machine.machineProduction > 0) {
@@ -173,6 +187,21 @@ function DigitalFactory() {
                    
                 machine.topScraps = sortedScraps;
                 machine.totalMachineScrap = records.reduce((sum: number, r: any) => sum + r.amount, 0);
+             }
+             
+             if (dRecords.length > 0) {
+                const groupedD = dRecords.reduce((acc: any, curr: any) => {
+                   acc[curr.reason] = (acc[curr.reason] || 0) + curr.amount;
+                   return acc;
+                }, {});
+                
+                const sortedDowntimes = Object.keys(groupedD)
+                   .map(reason => ({ reason, amount: groupedD[reason] }))
+                   .sort((a, b) => b.amount - a.amount)
+                   .slice(0, 3);
+                   
+                machine.topDowntimes = sortedDowntimes;
+                machine.totalMachineDowntime = dRecords.reduce((sum: number, r: any) => sum + r.amount, 0);
              }
           });
 
@@ -306,6 +335,30 @@ function DigitalFactory() {
                             {scrap.reason}
                          </span>
                          <strong style={{ color: "#f87171", fontSize: 14 }}>{scrap.amount} adet</strong>
+                      </div>
+                   ))}
+                </div>
+             </div>
+          )}
+
+          {data.topDowntimes && data.topDowntimes.length > 0 && (
+             <div style={{ marginTop: 24, background: "#162539", borderRadius: 12, padding: 14, border: "1px solid #1f3a5a" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                   <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#eab308", fontWeight: 600 }}>
+                      <Clock3 size={16} /> Duruş Analizi
+                   </div>
+                   <span style={{ fontSize: 12, background: "#eab30830", color: "#eab308", padding: "2px 8px", borderRadius: 12 }}>
+                      Toplam: {Math.round(data.totalMachineDowntime)} dk
+                   </span>
+                </div>
+                
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                   {data.topDowntimes.map((dw: any, index: number) => (
+                      <div key={index} style={{ background: "#1b2d45", padding: "8px 12px", borderRadius: 8, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                         <span style={{ color: "#cbd5e1", fontSize: 12, maxWidth: "70%", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={dw.reason}>
+                            {dw.reason}
+                         </span>
+                         <strong style={{ color: "#eab308", fontSize: 14 }}>{Math.round(dw.amount)} dk</strong>
                       </div>
                    ))}
                 </div>
