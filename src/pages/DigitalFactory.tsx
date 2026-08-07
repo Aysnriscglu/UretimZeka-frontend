@@ -40,11 +40,23 @@ const defaultMachineDataMap: Record<string, any> = {
   "Ütü Presi": { status: "KRİTİK", statusColor: "#ef4444", score: 45, issue: "Aşırı ısınma uyarısı", downtime: "35 dk", maintenance: "25 gün önce", aiWarning: "Soğutma sistemi yetersiz", alertsCount: 2, performance: generatePerf(45), scrapRecords: [] },
 };
 
+const parseNumber = (val: any) => {
+  if (val === null || val === undefined || val === '') return 0;
+  if (typeof val === 'number') return val;
+  const str = String(val).replace(',', '.');
+  const num = Number(str);
+  return isNaN(num) ? 0 : num;
+};
+
 const getKey = (obj: any, possibleKeys: string[]) => {
   if (!obj) return undefined;
-  const foundKey = Object.keys(obj).find(k => 
-    possibleKeys.some(pk => k.toLowerCase().trim() === pk.toLowerCase().trim() || k.toLowerCase().includes(pk.toLowerCase()))
-  );
+  const foundKey = Object.keys(obj).find(k => {
+    const cleanK = k.toLowerCase().replace(/[\s\*\-\_\(\)\[\]]/g, '');
+    return possibleKeys.some(pk => {
+       const cleanPk = pk.toLowerCase().replace(/[\s\*\-\_\(\)\[\]]/g, '');
+       return cleanK === cleanPk || cleanK.includes(cleanPk);
+    });
+  });
   return foundKey ? obj[foundKey] : undefined;
 };
 
@@ -52,18 +64,18 @@ const getKey = (obj: any, possibleKeys: string[]) => {
 const mapMachineName = (rawName: string) => {
   if (!rawName) return null;
   const name = rawName.toUpperCase();
-  if (name.includes("KALİBRE")) return "Kalibre Presi";
-  if (name.includes("AĞIZ")) return "Ağız Açma";
+  if (name.includes("KALİBRE") || name.includes("KALIBRE")) return "Kalibre Presi";
+  if (name.includes("AĞIZ") || name.includes("AGIZ")) return "Ağız Açma";
   if (name.includes("MERDANE")) return "Merdane";
   if (name.includes("MARKA")) return "Marka";
   if (name.includes("ALIN")) return "Alınkaynak";
   if (name.includes("ROLE 1") || name.includes("RÖLE 1")) return "Role 1";
   if (name.includes("ROLE 2") || name.includes("RÖLE 2")) return "Role 2";
   if (name.includes("ROLE 3") || name.includes("RÖLE 3")) return "Role 3";
-  if (name.includes("RADÜS")) return "Radüs Torna";
+  if (name.includes("RADÜS") || name.includes("RADUS")) return "Radüs Torna";
   if (name.includes("SUBAP")) return "Subap Delme";
   if (name.includes("MONTAJ")) return "Montaj Presi";
-  if (name.includes("ÜTÜ")) return "Ütü Presi";
+  if (name.includes("ÜTÜ") || name.includes("UTU")) return "Ütü Presi";
   return null;
 };
 
@@ -71,7 +83,6 @@ function DigitalFactory() {
   const [selectedMachine, setSelectedMachine] = useState("Kalibre Presi");
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
   
-  const [kpis, setKpis] = useState(defaultKpiItems);
   const [machineData, setMachineData] = useState(defaultMachineDataMap);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -100,14 +111,15 @@ function DigitalFactory() {
               const mappedMachine = mapMachineName(rawMachine);
               
               const uretim = getKey(row, ["Üretilen Miktar", "Uretim"]);
-              if (uretim) totalProduction += Number(uretim) || 0;
+              if (uretim) totalProduction += parseNumber(uretim);
 
               const hurdaMiktar = getKey(row, ["Hurda Miktarı", "Hurda Miktari"]);
-              if (hurdaMiktar) totalScrap += Number(hurdaMiktar) || 0;
+              if (hurdaMiktar) totalScrap += parseNumber(hurdaMiktar);
 
               const durusSuresi = getKey(row, ["Toplam Süre(dk)", "Toplam Süre", "Duruş", "Durus", "Duruş Süresi", "Durus Suresi", "Downtime"]);
-              const durusNedeni = getKey(row, ["Duruş Nedeni", "Durus Nedeni", "Duruş Tipi", "Çağrı Nedeni", "Sebep"]);
-              if (durusSuresi) totalDowntime += Number(durusSuresi) || 0;
+              const durusNedeni = getKey(row, ["Duruş Nedeni", "Durus Nedeni", "Duruş Tipi", "Çağrı Nedeni", "Sebep", "Açıklama", "Neden"]);
+              const pDurusSuresi = parseNumber(durusSuresi);
+              if (pDurusSuresi > 0) totalDowntime += pDurusSuresi;
 
               if (mappedMachine && parsedMachines[mappedMachine]) {
                  if (!parsedMachines[mappedMachine].downtimeRecords) {
@@ -115,31 +127,31 @@ function DigitalFactory() {
                  }
                  
                  if (uretim) {
-                    parsedMachines[mappedMachine].machineProduction = (parsedMachines[mappedMachine].machineProduction || 0) + (Number(uretim) || 0);
+                    parsedMachines[mappedMachine].machineProduction = (parsedMachines[mappedMachine].machineProduction || 0) + parseNumber(uretim);
                  }
                  if (hurdaMiktar) {
-                    parsedMachines[mappedMachine].machineScrap = (parsedMachines[mappedMachine].machineScrap || 0) + (Number(hurdaMiktar) || 0);
+                    parsedMachines[mappedMachine].machineScrap = (parsedMachines[mappedMachine].machineScrap || 0) + parseNumber(hurdaMiktar);
                  }
-                 if (durusSuresi) {
-                    parsedMachines[mappedMachine].downtime = `${(parsedMachines[mappedMachine].machineDowntime || 0) + (Number(durusSuresi) || 0)} dk`;
-                    parsedMachines[mappedMachine].machineDowntime = (parsedMachines[mappedMachine].machineDowntime || 0) + (Number(durusSuresi) || 0);
+                 if (pDurusSuresi > 0) {
+                    parsedMachines[mappedMachine].downtime = `${Math.round((parsedMachines[mappedMachine].machineDowntime || 0) + pDurusSuresi)} dk`;
+                    parsedMachines[mappedMachine].machineDowntime = (parsedMachines[mappedMachine].machineDowntime || 0) + pDurusSuresi;
                  }
 
                 const hurdaSebep = getKey(row, ["Hurda", "Hurda Kodu", "Hurda Sebebi"]);
-                const tarih = getKey(row, ["Tarih", "Zaman"]);
+                const tarih = getKey(row, ["Tarih", "Zaman", "Ay"]);
                 
                 if (hurdaSebep && hurdaMiktar) {
                    parsedMachines[mappedMachine].scrapRecords.push({
                       reason: hurdaSebep,
-                      amount: Number(hurdaMiktar),
+                      amount: parseNumber(hurdaMiktar),
                       date: tarih ? String(tarih).split(' ')[0] : 'Bilinmiyor'
                    });
                 }
                 
-                if (durusNedeni && durusSuresi) {
+                if (durusNedeni && pDurusSuresi > 0) {
                    parsedMachines[mappedMachine].downtimeRecords.push({
-                      reason: durusNedeni,
-                      amount: Number(durusSuresi),
+                      reason: String(durusNedeni),
+                      amount: pDurusSuresi,
                       date: tarih ? String(tarih).split(' ')[0] : 'Bilinmiyor'
                    });
                 }
@@ -153,19 +165,47 @@ function DigitalFactory() {
              const records = machine.scrapRecords;
              const dRecords = machine.downtimeRecords || [];
              
+             if (dRecords.length > 0) {
+                const groupedD = dRecords.reduce((acc: any, curr: any) => {
+                   acc[curr.reason] = (acc[curr.reason] || 0) + curr.amount;
+                   return acc;
+                }, {});
+                
+                const sortedDowntimes = Object.keys(groupedD)
+                   .map(reason => ({ reason, amount: groupedD[reason] }))
+                   .sort((a, b) => b.amount - a.amount)
+                   .slice(0, 3);
+                   
+                machine.topDowntimes = sortedDowntimes;
+                machine.totalMachineDowntime = dRecords.reduce((sum: number, r: any) => sum + r.amount, 0);
+                
+                if (sortedDowntimes.length > 0) {
+                   machine.issue = sortedDowntimes[0].reason; // Set latest issue to top downtime reason
+                   machine.aiWarning = `Son günlerde en çok zaman kaybı (${Math.round(sortedDowntimes[0].amount)} dk) '${sortedDowntimes[0].reason}' nedeniyle yaşandı.`;
+                   machine.alertsCount = dRecords.length;
+                }
+             }
+
              // Hesaplama
              if (machine.machineProduction > 0) {
                  const scrapRate = (machine.machineScrap || 0) / machine.machineProduction;
                  let calculatedScore = 100 - Math.round(scrapRate * 100);
                  if (calculatedScore < 0) calculatedScore = 0;
                  if (calculatedScore > 100) calculatedScore = 100;
-                 
                  machine.score = calculatedScore;
                  
-                 if (calculatedScore >= 85) {
+             } else if (machine.totalMachineDowntime > 0) {
+                 // Uretim yok ama durus var. Her 10 dk durus 1 puan dusursun
+                 let calculatedScore = 100 - Math.min(100, Math.round(machine.totalMachineDowntime / 10));
+                 if (calculatedScore < 0) calculatedScore = 0;
+                 machine.score = calculatedScore;
+             }
+             
+             if (machine.machineProduction > 0 || machine.totalMachineDowntime > 0) {
+                 if (machine.score >= 85) {
                      machine.status = "NORMAL";
                      machine.statusColor = "#10b981";
-                 } else if (calculatedScore >= 60) {
+                 } else if (machine.score >= 60) {
                      machine.status = "UYARI";
                      machine.statusColor = "#f59e0b";
                  } else {
@@ -187,21 +227,6 @@ function DigitalFactory() {
                    
                 machine.topScraps = sortedScraps;
                 machine.totalMachineScrap = records.reduce((sum: number, r: any) => sum + r.amount, 0);
-             }
-             
-             if (dRecords.length > 0) {
-                const groupedD = dRecords.reduce((acc: any, curr: any) => {
-                   acc[curr.reason] = (acc[curr.reason] || 0) + curr.amount;
-                   return acc;
-                }, {});
-                
-                const sortedDowntimes = Object.keys(groupedD)
-                   .map(reason => ({ reason, amount: groupedD[reason] }))
-                   .sort((a, b) => b.amount - a.amount)
-                   .slice(0, 3);
-                   
-                machine.topDowntimes = sortedDowntimes;
-                machine.totalMachineDowntime = dRecords.reduce((sum: number, r: any) => sum + r.amount, 0);
              }
           });
 
