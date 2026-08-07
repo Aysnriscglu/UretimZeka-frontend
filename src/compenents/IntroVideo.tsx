@@ -3,10 +3,19 @@ import { Box, Button } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 
 export default function IntroVideo() {
-  const [showVideo, setShowVideo] = useState(true);
+  const [showVideo, setShowVideo] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  useEffect(() => {
+    // Sadece daha önce izlenmediyse göster
+    const hasWatched = localStorage.getItem("introWatched_v2");
+    if (!hasWatched) {
+      setShowVideo(true);
+    }
+  }, []);
+
   const handleClose = () => {
+    localStorage.setItem("introWatched_v2", "true");
     setShowVideo(false);
   };
 
@@ -69,7 +78,6 @@ export default function IntroVideo() {
           src="/intro.mp4" 
           autoPlay
           muted
-          loop
           playsInline
           controls={false}
           style={{
@@ -77,6 +85,7 @@ export default function IntroVideo() {
             height: "100%",
             objectFit: "contain",
           }}
+          onEnded={handleClose}
         />
       </Box>
     </Box>
