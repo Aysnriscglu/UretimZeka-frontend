@@ -22,6 +22,12 @@ type MachineSceneProps = {
   setSelectedMachine: (machine: string) => void;
 };
 
+type MachineModelProps = {
+  machine: Machine;
+  isSelected: boolean;
+  onClick: (machine: Machine) => void;
+};
+
 // Makinelere endustriyel cesitlilik katmak icin ozel boya renkleri eklendi
 const spacing = 5.0;
 const machines: Machine[] = [
@@ -85,8 +91,8 @@ function MachineModel({ machine, onClick, isSelected }: MachineModelProps) {
          <mesh position={[-0.4, 0, 0.2]} castShadow><boxGeometry args={[0.8, 0.2, 0.2]} /><meshStandardMaterial {...bodyMat} /></mesh>
          <mesh position={[0, 0, 0.4]} rotation={[0.2, -0.2, 0]} castShadow><boxGeometry args={[1.2, 0.8, 0.4]} /><meshStandardMaterial color="#1e293b" /></mesh>
          <mesh position={[-0.1, 0.1, 0.62]} rotation={[0.2, -0.2, 0]}><planeGeometry args={[0.6, 0.4]} /><meshBasicMaterial color={statusColor} /></mesh>
-         <mesh position={[0.35, 0.2, 0.58]} rotation={[0.2, -0.2, 0]}><cylinderGeometry args={[0.05, 0.05, 0.1, 16]} rotation={[Math.PI/2, 0, 0]} /><meshStandardMaterial color="#ef4444" emissive="#ef4444" emissiveIntensity={1} /></mesh>
-         <mesh position={[0.35, 0.0, 0.58]} rotation={[0.2, -0.2, 0]}><cylinderGeometry args={[0.05, 0.05, 0.1, 16]} rotation={[Math.PI/2, 0, 0]} /><meshStandardMaterial color="#22c55e" emissive="#22c55e" emissiveIntensity={1} /></mesh>
+         <group position={[0.35, 0.2, 0.58]} rotation={[0.2, -0.2, 0]}><mesh rotation={[Math.PI/2, 0, 0]}><cylinderGeometry args={[0.05, 0.05, 0.1, 16]} /><meshStandardMaterial color="#ef4444" emissive="#ef4444" emissiveIntensity={1} /></mesh></group>
+         <group position={[0.35, 0.0, 0.58]} rotation={[0.2, -0.2, 0]}><mesh rotation={[Math.PI/2, 0, 0]}><cylinderGeometry args={[0.05, 0.05, 0.1, 16]} /><meshStandardMaterial color="#22c55e" emissive="#22c55e" emissiveIntensity={1} /></mesh></group>
       </group>
 
       <group position={[0, 6.0, 0]}>
