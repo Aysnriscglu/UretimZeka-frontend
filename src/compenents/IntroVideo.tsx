@@ -71,6 +71,7 @@ export default function IntroVideo() {
           muted
           loop
           playsInline
+          preload="auto"
           controls={false}
           style={{
             width: "100%",
