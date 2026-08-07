@@ -248,21 +248,6 @@ function DigitalFactory() {
         </div>
       </div>
 
-      <section className="kpi-grid" style={{ marginTop: 16 }}>
-        {kpis.map((item, i) => {
-          const Icon = item.icon;
-          return (
-            <article className="kpi-card" key={i}>
-              <div className={`kpi-icon ${item.color}`}><Icon size={23} /></div>
-              <div className="kpi-information">
-                <p>{item.title}</p>
-                <strong>{item.value} {item.unit && <small>{item.unit}</small>}</strong>
-                <span className={item.color}>{item.change}</span>
-              </div>
-            </article>
-          );
-        })}
-      </section>
 
       <section className="factory-layout">
         <div className="factory-scene">
