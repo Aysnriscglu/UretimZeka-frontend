@@ -242,25 +242,6 @@ function DigitalFactory() {
              }
           });
 
-          let newKpis = [...kpis];
-          if (totalProduction > 0) {
-             newKpis[0].value = totalProduction.toLocaleString('tr-TR');
-             newKpis[0].unit = "adet";
-             newKpis[0].change = "Excel Verisi";
-          }
-          if (totalDowntime > 0) {
-             newKpis[1].value = totalDowntime.toLocaleString('tr-TR');
-             newKpis[1].unit = "dk";
-             newKpis[1].change = "Excel Verisi";
-          }
-          if (totalScrap > 0) {
-             newKpis[2].value = totalScrap.toLocaleString('tr-TR');
-             newKpis[2].unit = "adet";
-             newKpis[2].change = "Excel Verisi";
-             newKpis[2].color = "red";
-          }
-
-          setKpis(newKpis);
           setMachineData(parsedMachines);
         } catch (error) {
           console.error("Error parsing Excel:", error);
