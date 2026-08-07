@@ -236,16 +236,6 @@ function DigitalFactory() {
             </span>
           </div>
 
-          <div className="risk-card">
-            <span className="risk-title">Risk Puanı / Performans</span>
-            <div className="risk-score">
-              <span style={{ color: data.statusColor }}>{data.score}</span>
-              <small>/100</small>
-            </div>
-            <div className="risk-bar" style={{ background: "#1b2d45" }}>
-              <div className="risk-value" style={{ width: `${data.score}%`, background: data.statusColor }}></div>
-            </div>
-          </div>
 
           <div className="info-item" style={{ display: "flex", alignItems: "center", gap: 8, color: data.statusColor, marginTop: 14 }}>
             <IssueIcon size={16} /> {data.issue}
