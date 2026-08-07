@@ -110,14 +110,9 @@ export default function OpexDashboard() {
            if (headerRowIndex !== -1) {
              const headerRow = rawRows[headerRowIndex];
              
-             // Create ultra-clean keys (no spaces, no newlines, no symbols)
-             const cleanHeaders = headerRow.map((h: any, idx: number) => {
+              const cleanHeaders = headerRow.map((h: any, idx: number) => {
                if (h == null || String(h).trim() === "") return `EMPTY_${idx}`;
-               return String(h)
-                 .toUpperCase()
-                 .replace(/İ/g, 'I')
-                 .replace(/I/g, 'I')
-                 .replace(/[^A-Z0-9ÇĞÖŞÜ]/g, ''); // Sadece harf ve rakam
+               return String(h).trim();
              });
 
              for (let i = headerRowIndex + 1; i < rawRows.length; i++) {
