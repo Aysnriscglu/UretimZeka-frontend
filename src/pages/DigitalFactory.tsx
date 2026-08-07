@@ -26,18 +26,18 @@ const generatePerf = (base: number) => {
 };
 
 const defaultMachineDataMap: Record<string, any> = {
-  "Marka": { status: "NORMAL", statusColor: "#10b981", score: 92, issue: "Sorun yok", downtime: "0 dk", maintenance: "3 gün önce", aiWarning: "Stabil", alertsCount: 0, performance: generatePerf(90), scrapRecords: [] },
-  "Merdane": { status: "NORMAL", statusColor: "#10b981", score: 88, issue: "Sorun yok", downtime: "5 dk", maintenance: "10 gün önce", aiWarning: "Optimum", alertsCount: 0, performance: generatePerf(85), scrapRecords: [] },
-  "Alınkaynak": { status: "UYARI", statusColor: "#f59e0b", score: 75, issue: "Kaynak ısısı dengesiz", downtime: "12 dk", maintenance: "15 gün önce", aiWarning: "Isı sensörü kontrol edilmeli", alertsCount: 1, performance: generatePerf(75), scrapRecords: [] },
-  "Ağız Açma": { status: "NORMAL", statusColor: "#10b981", score: 95, issue: "Sorun tespit edilmedi", downtime: "0 dk", maintenance: "12 gün önce", aiWarning: "Optimum çalışma sıcaklığında.", alertsCount: 0, performance: generatePerf(95), scrapRecords: [] },
-  "Role 1": { status: "UYARI", statusColor: "#f59e0b", score: 68, issue: "Sensör gecikmesi", downtime: "22 dk", maintenance: "18 gün önce", aiWarning: "Sensör 2 yanıt süresi limitin üzerinde.", alertsCount: 3, performance: generatePerf(68), scrapRecords: [] },
-  "Role 2": { status: "NORMAL", statusColor: "#10b981", score: 92, issue: "Sorun tespit edilmedi", downtime: "0 dk", maintenance: "2 gün önce", aiWarning: "Sistem verimliliği maksimumda.", alertsCount: 0, performance: generatePerf(92), scrapRecords: [] },
-  "Role 3": { status: "NORMAL", statusColor: "#10b981", score: 89, issue: "Sorun tespit edilmedi", downtime: "0 dk", maintenance: "4 gün önce", aiWarning: "Normal", alertsCount: 0, performance: generatePerf(89), scrapRecords: [] },
-  "Kalibre Presi": { status: "KRİTİK", statusColor: "#ef4444", score: 34, issue: "Hidrolik basınç problemi", downtime: "42 dk", maintenance: "8 gün önce", aiWarning: "Hidrolik arıza son 14 günde 4 kez tekrarlandı.", alertsCount: 1, performance: generatePerf(40), scrapRecords: [] },
-  "Radüs Torna": { status: "NORMAL", statusColor: "#10b981", score: 94, issue: "Sorun yok", downtime: "0 dk", maintenance: "1 gün önce", aiWarning: "Kesici uç ömrü %80", alertsCount: 0, performance: generatePerf(94), scrapRecords: [] },
-  "Subap Delme": { status: "UYARI", statusColor: "#f59e0b", score: 70, issue: "Titreşim artışı", downtime: "18 dk", maintenance: "20 gün önce", aiWarning: "Motor devrinde dalgalanma", alertsCount: 2, performance: generatePerf(70), scrapRecords: [] },
-  "Montaj Presi": { status: "NORMAL", statusColor: "#10b981", score: 96, issue: "Sorun yok", downtime: "0 dk", maintenance: "5 gün önce", aiWarning: "Güç tüketimi stabil", alertsCount: 0, performance: generatePerf(96), scrapRecords: [] },
-  "Ütü Presi": { status: "KRİTİK", statusColor: "#ef4444", score: 45, issue: "Aşırı ısınma uyarısı", downtime: "35 dk", maintenance: "25 gün önce", aiWarning: "Soğutma sistemi yetersiz", alertsCount: 2, performance: generatePerf(45), scrapRecords: [] },
+  "Marka": { status: "BİLGİ YOK", statusColor: "#64748b", alertsCount: 0 },
+  "Merdane": { status: "BİLGİ YOK", statusColor: "#64748b", alertsCount: 0 },
+  "Alınkaynak": { status: "BİLGİ YOK", statusColor: "#64748b", alertsCount: 0 },
+  "Ağız Açma": { status: "BİLGİ YOK", statusColor: "#64748b", alertsCount: 0 },
+  "Role 1": { status: "BİLGİ YOK", statusColor: "#64748b", alertsCount: 0 },
+  "Role 2": { status: "BİLGİ YOK", statusColor: "#64748b", alertsCount: 0 },
+  "Role 3": { status: "BİLGİ YOK", statusColor: "#64748b", alertsCount: 0 },
+  "Kalibre Presi": { status: "BİLGİ YOK", statusColor: "#64748b", alertsCount: 0 },
+  "Radüs Torna": { status: "BİLGİ YOK", statusColor: "#64748b", alertsCount: 0 },
+  "Subap Delme": { status: "BİLGİ YOK", statusColor: "#64748b", alertsCount: 0 },
+  "Montaj Presi": { status: "BİLGİ YOK", statusColor: "#64748b", alertsCount: 0 },
+  "Ütü Presi": { status: "BİLGİ YOK", statusColor: "#64748b", alertsCount: 0 },
 };
 
 const parseNumber = (val: any) => {
@@ -324,99 +324,64 @@ function DigitalFactory() {
           <div className="panel-header">
             <h2>{selectedMachine}</h2>
             <span className="critical-badge" style={{ background: data.statusColor + "30", color: data.statusColor, border: `1px solid ${data.statusColor}` }}>
-              {data.status}
+              {data.status === "BİLGİ YOK" ? "VERİ BEKLENİYOR" : data.status}
             </span>
           </div>
 
-          <div className="risk-card">
-            <span className="risk-title">Risk Puanı / Performans</span>
-            <div className="risk-score">
-              <span style={{ color: data.statusColor }}>{data.score}</span>
-              <small>/100</small>
+          {/* Duruş Özeti Kartı */}
+          <div style={{ background: "#162539", padding: "16px 20px", borderRadius: 12, border: "1px solid #1f3a5a", marginTop: 20 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, color: "#94a3b8", fontSize: 13, marginBottom: 8, fontWeight: 500 }}>
+              <Clock3 size={16} color="#eab308" /> Toplam Duruş Süresi
             </div>
-            <div className="risk-bar" style={{ background: "#1b2d45" }}>
-              <div className="risk-value" style={{ width: `${data.score}%`, background: data.statusColor }}></div>
-            </div>
-          </div>
-
-          <div className="info-item" style={{ display: "flex", alignItems: "center", gap: 8, color: data.statusColor, marginTop: 14 }}>
-            <IssueIcon size={16} /> {data.issue}
-          </div>
-
-          <div className="performance" style={{ marginTop: 20 }}>
-            <h4>Performans <small>(Son 7 Gün)</small></h4>
-            <div style={{ width: "100%", height: 70, background: "#11263d", borderRadius: 12, padding: 8, boxSizing: "border-box" }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={data.performance}>
-                  <Line type="stepAfter" dataKey="value" stroke={data.statusColor} strokeWidth={2} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+              <span style={{ fontSize: 36, fontWeight: 700, color: data.totalMachineDowntime > 0 ? "#ef4444" : "#10b981", lineHeight: 1 }}>
+                {data.totalMachineDowntime ? Math.round(data.totalMachineDowntime) : 0}
+              </span>
+              <span style={{ color: "#94a3b8", fontSize: 16, fontWeight: 500 }}>dk</span>
             </div>
           </div>
 
-          {data.topScraps && data.topScraps.length > 0 && (
-             <div style={{ marginTop: 24, background: "#162539", borderRadius: 12, padding: 14, border: "1px solid #1f3a5a" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-                   <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#f87171", fontWeight: 600 }}>
-                      <Trash2 size={16} /> Hurda Analizi
-                   </div>
-                   <span style={{ fontSize: 12, background: "#ef444430", color: "#ef4444", padding: "2px 8px", borderRadius: 12 }}>
-                      Toplam: {data.totalMachineScrap}
-                   </span>
-                </div>
-                
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                   {data.topScraps.map((scrap: any, index: number) => (
-                      <div key={index} style={{ background: "#1b2d45", padding: "8px 12px", borderRadius: 8, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                         <span style={{ color: "#cbd5e1", fontSize: 12, maxWidth: "70%", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={scrap.reason}>
-                            {scrap.reason}
-                         </span>
-                         <strong style={{ color: "#f87171", fontSize: 14 }}>{scrap.amount} adet</strong>
-                      </div>
-                   ))}
-                </div>
-             </div>
+          {/* Duruş Nedenleri Listesi */}
+          {data.topDowntimes && data.topDowntimes.length > 0 ? (
+            <div style={{ marginTop: 24 }}>
+              <h4 style={{ color: "#cbd5e1", marginBottom: 12, fontSize: 14, fontWeight: 600 }}>
+                En Sık Yaşanan Duruş Nedenleri
+              </h4>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {data.topDowntimes.map((dw: any, index: number) => (
+                  <div key={index} style={{ background: "#1b2d45", padding: "12px 16px", borderRadius: 8, display: "flex", justifyContent: "space-between", alignItems: "center", borderLeft: `3px solid ${index === 0 ? "#ef4444" : "#f59e0b"}` }}>
+                    <span style={{ color: "#e2e8f0", fontSize: 13, fontWeight: 500, maxWidth: "75%", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={dw.reason}>
+                      {dw.reason}
+                    </span>
+                    <strong style={{ color: index === 0 ? "#ef4444" : "#f59e0b", fontSize: 14 }}>{Math.round(dw.amount)} dk</strong>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div style={{ marginTop: 24, background: "#1b2d45", padding: 20, borderRadius: 8, textAlign: "center", color: "#64748b", fontSize: 13, border: "1px dashed #334155" }}>
+              Seçili makine için henüz duruş kaydı bulunmuyor. Lütfen güncel raporu yükleyin.
+            </div>
           )}
 
-          {data.topDowntimes && data.topDowntimes.length > 0 && (
-             <div style={{ marginTop: 24, background: "#162539", borderRadius: 12, padding: 14, border: "1px solid #1f3a5a" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-                   <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#eab308", fontWeight: 600 }}>
-                      <Clock3 size={16} /> Duruş Analizi
-                   </div>
-                   <span style={{ fontSize: 12, background: "#eab30830", color: "#eab308", padding: "2px 8px", borderRadius: 12 }}>
-                      Toplam: {Math.round(data.totalMachineDowntime)} dk
-                   </span>
-                </div>
-                
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                   {data.topDowntimes.map((dw: any, index: number) => (
-                      <div key={index} style={{ background: "#1b2d45", padding: "8px 12px", borderRadius: 8, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                         <span style={{ color: "#cbd5e1", fontSize: 12, maxWidth: "70%", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={dw.reason}>
-                            {dw.reason}
-                         </span>
-                         <strong style={{ color: "#eab308", fontSize: 14 }}>{Math.round(dw.amount)} dk</strong>
-                      </div>
-                   ))}
-                </div>
-             </div>
-          )}
-
-          <div className="ai-recommendations" style={{ padding: 14, borderRadius: 12, marginTop: 24, background: "#162d48" }}>
+          {/* Yapay Zeka Uyarıları */}
+          <div className="ai-recommendations" style={{ padding: 16, borderRadius: 12, marginTop: 24, background: "#162d48", border: "1px solid #1f3a5a" }}>
             <div className="ai-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, color: "white", fontWeight: 600 }}>
-                <Brain size={18} color="#39bdf8" /> Yapay Zekâ Uyarıları
+                <Brain size={18} color="#39bdf8" /> Yapay Zekâ Analizi
               </div>
-              <div className="badge" style={{ width: 24, height: 24, borderRadius: "50%", background: data.alertsCount > 0 ? "#ef4444" : "#10b981", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>
-                {data.alertsCount}
+              <div className="badge" style={{ width: 24, height: 24, borderRadius: "50%", background: data.alertsCount > 0 ? "#ef4444" : "#10b981", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 600 }}>
+                {data.alertsCount || 0}
               </div>
             </div>
 
-            <div className="ai-warning" style={{ padding: 14, borderRadius: 8, background: "#1b2d45", borderLeft: `4px solid ${data.statusColor}` }}>
+            <div className="ai-warning" style={{ padding: 14, borderRadius: 8, background: "#1b2d45", borderLeft: `4px solid ${data.alertsCount > 0 ? "#ef4444" : "#10b981"}` }}>
               <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                <AlertTriangle size={18} color={data.statusColor} style={{ flexShrink: 0, marginTop: 2 }} />
+                <AlertTriangle size={18} color={data.alertsCount > 0 ? "#ef4444" : "#10b981"} style={{ flexShrink: 0, marginTop: 2 }} />
                 <div>
-                  <p style={{ margin: 0, color: "#d2dbe7", fontSize: 13, lineHeight: 1.4 }}>{data.aiWarning}</p>
+                  <p style={{ margin: 0, color: "#d2dbe7", fontSize: 13, lineHeight: 1.5 }}>
+                    {data.aiWarning || "Makine stabil görünüyor. Önemli bir duruş tespit edilmedi."}
+                  </p>
                 </div>
               </div>
             </div>
