@@ -16,8 +16,15 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+}));
 app.use(express.json());
+
+// Derlenmiş frontend dosyalarını servis et (Railway production)
+app.use(express.static(path.join(__dirname, "../dist")));
 
 // Dosya Yükleme (Multer) Yapılandırması
 const storage = multer.diskStorage({
@@ -195,9 +202,6 @@ console.log(`🔗 Hedef LM Studio URL: ${process.env.LM_STUDIO_URL || "http://12
 console.log(`📁 Backend Dizini: ${__dirname}`);
 console.log("=================================");
 
-app.get("/", (req, res) => {
-  res.send("Backend çalışıyor.");
-});
 
 // Dosya Yükleme Endpoint'i
 app.post("/api/upload", upload.single("file"), (req, res) => {
@@ -302,6 +306,14 @@ app.post("/api/ai", async (req, res) => {
       })
       .join("\n");
 
+    let rulesText = `- Cevabı kısa, öz ve net tut (maksimum 250 kelime, 5-6 madde).\n- Türkçe cevap ver.\n- Yönetici dili kullan.\n- Sonunda "Yapay Zeka Yorumu" ekle.`;
+    
+    if (Object.keys(excelDataMap).length > 0) {
+      rulesText += `\n- Yukarıdaki hesaplanmış istatistikleri ve özet verileri detaylı şekilde yorumla.\n- Toplam maliyet, en çok arızalanan makine ve duruş süreleriyle ilgili nokta atışı tespitler yap.`;
+    } else {
+      rulesText += `\n- Sistemde şu an Excel verisi bulunmadığından, genel prensipler üzerinden mantıklı varsayımlar ve OPEX/Yalın Üretim doğrultusunda cevap ver. Hayali istatistik uydurma.`;
+    }
+
     const prompt = `
 Sen deneyimli bir OPEX, Lean Manufacturing ve Sürekli İyileştirme danışmanısın.
 
@@ -321,12 +333,7 @@ KULLANICI SORUSU
 ${question}
 
 Kurallar:
-- Yukarıdaki hesaplanmış istatistikleri ve özet verileri detaylı şekilde yorumla.
-- Toplam maliyet, en çok arızalanan makine ve duruş süreleriyle ilgili nokta atışı tespitler yap.
-- Cevabı kısa, öz ve net tut (maksimum 250 kelime, 5-6 madde).
-- Türkçe cevap ver.
-- Yönetici dili kullan.
-- Sonunda "Yapay Zeka Yorumu" ekle.
+${rulesText}
 `;
 
     const provider = process.env.AI_PROVIDER || "lmstudio";
@@ -455,11 +462,16 @@ app.get("/api/maintenance", (req, res) => {
   }
 });
 
-const PORT = 5000;
+// Tüm bilinmeyen route'ları React'e yönlendir (React Router)
+app.get(/(.*)/, (req, res) => {
+  res.sendFile(path.join(__dirname, "../dist/index.html"));
+});
 
-app.listen(PORT, "127.0.0.1", () => {
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, "0.0.0.0", () => {
   console.log("=================================");
   console.log("🚀 Backend çalışıyor");
-  console.log(`🌍 http://127.0.0.1:${PORT}`);
+  console.log(`🌍 Port: ${PORT}`);
   console.log("=================================");
 });

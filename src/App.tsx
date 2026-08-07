@@ -1,4 +1,3 @@
-
 import {
   AlertTriangle,
   BarChart3,
@@ -9,13 +8,14 @@ import {
   Home,
   PackageX,
   Wrench,
+  LogOut,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import ScrapAnalysis from "./pages/ScrapAnalysis";
 import DurusAnalysis from "./pages/DurusAnalysis";
 import Maintenance from "./pages/Maintenance";
 import OpexDashboard from "./pages/OpexDashboard";
-
 
 import "./App.css";
 
@@ -29,7 +29,6 @@ const menuItems = [
   { name: "Hurda Analizi", icon: PackageX },
   { name: "Bakım", icon: Wrench },
   { name: "Yapay Zekâ", icon: Bot },
-
 ];
 
 const kpiItems = [
@@ -69,11 +68,20 @@ const kpiItems = [
 
 function App() {
   const [activePage, setActivePage] = useState("Opex");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const isAuth = localStorage.getItem("isAuthenticated");
+    if (isAuth !== "true") {
+      navigate("/login");
+    }
+  }, [navigate]);
+
   return (
     <div className="app-container">
       <aside className="sidebar">
-        <div className="logo">
-          Üretim<span>Zekâ</span>
+        <div className="logo" style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+          <img src="/opex-logo.png" alt="OPEX Jantsa" style={{ width: '100%', maxWidth: '200px', height: 'auto' }} />
         </div>
 
         <nav className="menu">
@@ -82,14 +90,14 @@ function App() {
 
             return (
               <button
-  key={item.name}
-  onClick={() => setActivePage(item.name)}
-  className={
-    activePage === item.name
-      ? "menu-item active"
-      : "menu-item"
-  }
->
+                key={item.name}
+                onClick={() => setActivePage(item.name)}
+                className={
+                  activePage === item.name
+                    ? "menu-item active"
+                    : "menu-item"
+                }
+              >
                 <Icon size={21} />
                 <span>{item.name}</span>
               </button>
@@ -105,22 +113,27 @@ function App() {
             <span>Tüm sistemler çalışıyor</span>
           </div>
         </div>
+        
+        <button 
+          onClick={() => {
+            localStorage.removeItem("isAuthenticated");
+            navigate("/login");
+          }}
+          className="menu-item"
+          style={{ marginTop: 'auto', marginBottom: '20px', color: '#ef4444' }}
+        >
+          <LogOut size={21} />
+          <span>Çıkış Yap</span>
+        </button>
       </aside>
-<main className="main-content">
-  {activePage === "Opex" && <OpexDashboard />}
- 
-  {activePage === "Dijital Fabrika" && <DigitalFactory />}
-
-  {activePage === "Yapay Zekâ" && <AI />}
-  {activePage === "Hurda Analizi" && <ScrapAnalysis />}
-  {activePage === "Duruş Analizi" && <DurusAnalysis />}
-  {activePage === "Bakım" && <Maintenance />}
-  
- 
-
-
-    
-</main>
+      <main className="main-content">
+        {activePage === "Opex" && <OpexDashboard />}
+        {activePage === "Dijital Fabrika" && <DigitalFactory />}
+        {activePage === "Yapay Zekâ" && <AI />}
+        {activePage === "Hurda Analizi" && <ScrapAnalysis />}
+        {activePage === "Duruş Analizi" && <DurusAnalysis />}
+        {activePage === "Bakım" && <Maintenance />}
+      </main>
     </div>
   );
 }

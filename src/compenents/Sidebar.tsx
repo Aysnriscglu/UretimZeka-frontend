@@ -21,8 +21,8 @@ const menuItems = [
 function Sidebar() {
   return (
     <aside className="sidebar">
-      <div className="logo">
-        Üretim<span>Zekâ</span>
+      <div className="logo" style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+        <img src="/opex-logo.png" alt="OPEX Jantsa" style={{ width: '100%', maxWidth: '200px', height: 'auto' }} />
       </div>
 
       <nav className="menu">

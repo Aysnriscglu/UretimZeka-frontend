@@ -13,6 +13,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  LabelList,
 } from "recharts";
 
 type ScrapRow = {
@@ -475,7 +476,9 @@ const materialOK =
                 dot={{ r: 5 }}
                 activeDot={{ r: 8 }}
                 animationDuration={1500}
-              />
+              >
+                <LabelList dataKey="hurda" position="top" fill="#9fb0c9" fontSize={12} offset={10} />
+              </Line>
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -537,7 +540,9 @@ const materialOK =
                 fill="#3b82f6"
                 radius={[8, 8, 0, 0]}
                 animationDuration={1500}
-              />
+              >
+                <LabelList dataKey="adet" position="top" fill="#9fb0c9" fontSize={12} />
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>        {/* ---------- İş Merkezine Göre Hurda ---------- */}
@@ -573,7 +578,9 @@ const materialOK =
                 fill="#10b981"
                 radius={[8, 8, 0, 0]}
                 animationDuration={1500}
-              />
+              >
+                <LabelList dataKey="hurda" position="top" fill="#9fb0c9" fontSize={12} />
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -613,7 +620,9 @@ const materialOK =
       fill="#f59e0b"
       radius={[8, 8, 0, 0]}
       animationDuration={1500}
-    />
+    >
+      <LabelList dataKey="hurda" position="top" fill="#9fb0c9" fontSize={12} />
+    </Bar>
   </BarChart>
 </ResponsiveContainer>
         </div>

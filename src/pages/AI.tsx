@@ -43,7 +43,7 @@ function AI() {
     setUploadStatus("Yükleniyor...");
 
     try {
-      const res = await fetch("http://127.0.0.1:5000/api/upload", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL ?? ""}/api/upload`, {
         method: "POST",
         body: formData,
       });
@@ -79,7 +79,7 @@ function AI() {
   useEffect(() => {
     async function checkStatus() {
       try {
-        const res = await fetch("http://127.0.0.1:5000/api/ai/status");
+        const res = await fetch(`${import.meta.env.VITE_API_URL ?? ""}/api/ai/status`);
         const data = await res.json();
         if (data.provider && data.model) {
           setAiInfo({
@@ -123,7 +123,7 @@ function AI() {
     try {
 
       const response = await fetch(
-        "http://127.0.0.1:5000/api/ai",
+        `${import.meta.env.VITE_API_URL ?? ""}/api/ai`,
         {
           method: "POST",
 
