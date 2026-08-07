@@ -88,6 +88,7 @@ function DigitalFactory() {
           let parsedMachines = JSON.parse(JSON.stringify(defaultMachineDataMap));
           let totalProduction = 0;
           let totalScrap = 0;
+          let totalDowntime = 0;
 
           wb.SheetNames.forEach(sheetName => {
             const ws = wb.Sheets[sheetName];
@@ -104,12 +105,19 @@ function DigitalFactory() {
               const hurdaMiktar = getKey(row, ["Hurda Miktarı", "Hurda Miktari"]);
               if (hurdaMiktar) totalScrap += Number(hurdaMiktar) || 0;
 
+              const durusSuresi = getKey(row, ["Duruş", "Durus", "Duruş Süresi", "Durus Suresi", "Downtime"]);
+              if (durusSuresi) totalDowntime += Number(durusSuresi) || 0;
+
               if (mappedMachine && parsedMachines[mappedMachine]) {
                  if (uretim) {
                     parsedMachines[mappedMachine].machineProduction = (parsedMachines[mappedMachine].machineProduction || 0) + (Number(uretim) || 0);
                  }
                  if (hurdaMiktar) {
                     parsedMachines[mappedMachine].machineScrap = (parsedMachines[mappedMachine].machineScrap || 0) + (Number(hurdaMiktar) || 0);
+                 }
+                 if (durusSuresi) {
+                    parsedMachines[mappedMachine].downtime = `${(parsedMachines[mappedMachine].machineDowntime || 0) + (Number(durusSuresi) || 0)} dk`;
+                    parsedMachines[mappedMachine].machineDowntime = (parsedMachines[mappedMachine].machineDowntime || 0) + (Number(durusSuresi) || 0);
                  }
 
                 const hurdaSebep = getKey(row, ["Hurda", "Hurda Kodu", "Sebep"]);
@@ -134,8 +142,6 @@ function DigitalFactory() {
              // Hesaplama
              if (machine.machineProduction > 0) {
                  const scrapRate = (machine.machineScrap || 0) / machine.machineProduction;
-                 // Hurda oranına göre skor hesapla (Örn: %10 hurda = %90 performans)
-                 // Hurda oranını biraz daha cezalandırmak için * 2 yapabiliriz, standart tutalım:
                  let calculatedScore = 100 - Math.round(scrapRate * 100);
                  if (calculatedScore < 0) calculatedScore = 0;
                  if (calculatedScore > 100) calculatedScore = 100;
@@ -155,17 +161,15 @@ function DigitalFactory() {
              }
 
              if (records.length > 0) {
-                // Group by reason to find top scrap issues
                 const grouped = records.reduce((acc: any, curr: any) => {
                    acc[curr.reason] = (acc[curr.reason] || 0) + curr.amount;
                    return acc;
                 }, {});
                 
-                // Sort by highest amount
                 const sortedScraps = Object.keys(grouped)
                    .map(reason => ({ reason, amount: grouped[reason] }))
                    .sort((a, b) => b.amount - a.amount)
-                   .slice(0, 3); // Top 3 reasons
+                   .slice(0, 3);
                    
                 machine.topScraps = sortedScraps;
                 machine.totalMachineScrap = records.reduce((sum: number, r: any) => sum + r.amount, 0);
@@ -177,6 +181,11 @@ function DigitalFactory() {
              newKpis[0].value = totalProduction.toLocaleString('tr-TR');
              newKpis[0].unit = "adet";
              newKpis[0].change = "Excel Verisi";
+          }
+          if (totalDowntime > 0) {
+             newKpis[1].value = totalDowntime.toLocaleString('tr-TR');
+             newKpis[1].unit = "dk";
+             newKpis[1].change = "Excel Verisi";
           }
           if (totalScrap > 0) {
              newKpis[2].value = totalScrap.toLocaleString('tr-TR');
