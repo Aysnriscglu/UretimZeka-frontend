@@ -189,6 +189,7 @@ function DigitalFactory() {
                 }
               }
             });
+            }); // end wb.SheetNames.forEach
           }); // end results.forEach
 
           // Process and aggregate scrap records for each machine
