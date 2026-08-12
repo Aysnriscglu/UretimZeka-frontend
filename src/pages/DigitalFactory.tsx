@@ -130,8 +130,8 @@ function DigitalFactory() {
               const hurdaMiktar = getKey(row, ["Hurda Miktarı", "Hurda Miktari"]);
               if (hurdaMiktar) totalScrap += parseNumber(hurdaMiktar);
 
-              const durusSuresi = getKey(row, ["Toplam Süre(dk)", "Toplam Süre", "Duruş Süresi", "Durus Suresi", "Downtime", "Sure", "Süre"]);
-              const durusNedeni = getKey(row, ["Duruş Tipi", "Duruş Nedeni", "Durus Nedeni", "Çağrı Nedeni", "Sebep", "Açıklama", "Neden", "Duruş", "Durus"]);
+              const durusSuresi = getKey(row, ["Müdahale Süresi(dk)", "Müdahale Süresi", "Çağrı Süresi(dk)", "Çağrı Süresi", "Toplam Süre(dk)", "Toplam Süre", "Duruş Süresi", "Durus Suresi", "Downtime", "Sure", "Süre"]);
+              const durusNedeni = getKey(row, ["Duruş Adı", "Durus Adi", "Duruş Tipi", "Duruş Nedeni", "Durus Nedeni", "Çağrı Nedeni", "Sebep", "Açıklama", "Neden", "Duruş", "Durus"]);
               const pDurusSuresi = parseNumber(durusSuresi);
               if (pDurusSuresi > 0) totalDowntime += pDurusSuresi;
 
