@@ -51,25 +51,19 @@ const parseNumber = (val: any) => {
 const getKey = (obj: any, possibleKeys: string[]) => {
   if (!obj) return undefined;
   
-  const exactMatch = Object.keys(obj).find(k => {
-    const cleanK = k.toLowerCase().replace(/[\s\*\-\_\(\)\[\]]/g, '');
-    return possibleKeys.some(pk => {
-       const cleanPk = pk.toLowerCase().replace(/[\s\*\-\_\(\)\[\]]/g, '');
-       return cleanK === cleanPk;
-    });
-  });
-  
-  if (exactMatch) return obj[exactMatch];
+  for (const pk of possibleKeys) {
+    const cleanPk = pk.toLowerCase().replace(/[\s\*\-\_\(\)\[\]]/g, '');
+    const exactMatch = Object.keys(obj).find(k => k.toLowerCase().replace(/[\s\*\-\_\(\)\[\]]/g, '') === cleanPk);
+    if (exactMatch) return obj[exactMatch];
+  }
 
-  const includesMatch = Object.keys(obj).find(k => {
-    const cleanK = k.toLowerCase().replace(/[\s\*\-\_\(\)\[\]]/g, '');
-    return possibleKeys.some(pk => {
-       const cleanPk = pk.toLowerCase().replace(/[\s\*\-\_\(\)\[\]]/g, '');
-       return cleanK.includes(cleanPk);
-    });
-  });
+  for (const pk of possibleKeys) {
+    const cleanPk = pk.toLowerCase().replace(/[\s\*\-\_\(\)\[\]]/g, '');
+    const includesMatch = Object.keys(obj).find(k => k.toLowerCase().replace(/[\s\*\-\_\(\)\[\]]/g, '').includes(cleanPk));
+    if (includesMatch) return obj[includesMatch];
+  }
   
-  return includesMatch ? obj[includesMatch] : undefined;
+  return undefined;
 };
 
 // Excel'deki Is Merkezi isimlerini bizim makine isimlerimize cevir
@@ -121,7 +115,7 @@ function DigitalFactory() {
             if (!json || json.length === 0) return;
 
             json.forEach((row: any) => {
-              const rawMachine = getKey(row, ["İş Merkezi", "Is Merkezi", "Makine"]);
+              const rawMachine = getKey(row, ["İş Merkezi_2", "İş Merkezi_1", "İş Merkezi", "Is Merkezi_2", "Is Merkezi_1", "Is Merkezi", "Makine_2", "Makine_1", "Makine"]);
               const mappedMachine = mapMachineName(rawMachine);
               
               const uretim = getKey(row, ["Üretilen Miktar", "Uretim"]);
