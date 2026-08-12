@@ -126,6 +126,8 @@ function DigitalFactory() {
 
               const durusSuresi = getKey(row, ["Müdahale Süresi(dk)", "Müdahale Süresi", "Çağrı Süresi(dk)", "Çağrı Süresi", "Toplam Süre(dk)", "Toplam Süre", "Duruş Süresi", "Durus Suresi", "Downtime", "Sure", "Süre"]);
               const durusNedeni = getKey(row, ["Arıza Tipi", "Ariza Tipi", "Duruş Adı", "Durus Adi", "Duruş Tipi", "Duruş Nedeni", "Durus Nedeni", "Çağrı Nedeni", "Sebep", "Açıklama", "Neden", "Duruş", "Durus"]);
+              const technician = getKey(row, ["Müdahale Eden", "Teknisyen", "Bakımcı", "Gideren", "Sorumlu", "Personel"]);
+              const solution = getKey(row, ["Çözüm", "Cozum", "M. Bitiş Yorumu", "Yapılan İşlem", "Yapilan Islem", "Aksiyon"]);
               const pDurusSuresi = parseNumber(durusSuresi);
               if (pDurusSuresi > 0) totalDowntime += pDurusSuresi;
 
@@ -160,7 +162,9 @@ function DigitalFactory() {
                    parsedMachines[mappedMachine].downtimeRecords.push({
                       reason: durusNedeni ? String(durusNedeni) : "Bilinmeyen Neden",
                       amount: pDurusSuresi,
-                      date: tarih ? String(tarih).split(' ')[0] : 'Bilinmiyor'
+                      date: tarih ? String(tarih).split(' ')[0] : 'Bilinmiyor',
+                      technician: technician ? String(technician) : null,
+                      solution: solution ? String(solution) : null
                    });
                 }
               }
@@ -336,7 +340,32 @@ function DigitalFactory() {
             </div>
           ) : (
             <div style={{ marginTop: 24, background: "#1b2d45", padding: 20, borderRadius: 8, textAlign: "center", color: "#64748b", fontSize: 13, border: "1px dashed #334155" }}>
-              Seçili makine için henüz duruş kaydı bulunmuyor. Lütfen güncel raporu yükleyin.
+              Seçili makine için henüz duruş kaydı bulunmuyor. Lütfen güncel raporu yükleyin. Veya verisi olan başka bir makine seçin.
+            </div>
+          )}
+
+          {/* Son Bakım & Müdahale Kayıtları */}
+          {data.downtimeRecords && data.downtimeRecords.length > 0 && (
+            <div style={{ marginTop: 24 }}>
+              <h4 style={{ color: "#cbd5e1", marginBottom: 12, fontSize: 14, fontWeight: 600 }}>
+                Son Bakım & Müdahale Kayıtları
+              </h4>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {[...data.downtimeRecords].reverse().slice(0, 5).map((rec: any, idx: number) => (
+                  <div key={idx} style={{ background: "#162d48", padding: "12px", borderRadius: 8, borderLeft: `3px solid #38bdf8`, border: "1px solid #1f3a5a" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                       <strong style={{ color: "#e2e8f0", fontSize: 13 }}>{rec.reason}</strong>
+                       <span style={{ color: "#ef4444", fontSize: 12, fontWeight: 600 }}>{Math.round(rec.amount)} dk</span>
+                    </div>
+                    {(rec.technician || rec.solution) && (
+                      <div style={{ fontSize: 12, color: "#94a3b8", display: "flex", flexDirection: "column", gap: 4, background: "#0f172a", padding: "8px", borderRadius: "6px" }}>
+                        {rec.technician && <div><strong style={{ color: "#64748b" }}>Teknisyen:</strong> {rec.technician}</div>}
+                        {rec.solution && <div><strong style={{ color: "#64748b" }}>Çözüm:</strong> {rec.solution}</div>}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
