@@ -102,18 +102,20 @@ function DigitalFactory() {
       const files = Array.from(e.target.files);
       setUploadedFiles(prev => [...prev, ...files.map(f => f.name)]);
 
-      const reader = new FileReader();
-      reader.onload = (evt) => {
+      Promise.all(files.map(file => new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (evt) => resolve(evt.target?.result);
+        reader.readAsBinaryString(file);
+      }))).then(results => {
         try {
-          const bstr = evt.target?.result;
-          const wb = XLSX.read(bstr, { type: 'binary' });
-          
-          let parsedMachines = JSON.parse(JSON.stringify(defaultMachineDataMap));
+          let parsedMachines = JSON.parse(JSON.stringify(machineData));
           let totalProduction = 0;
           let totalScrap = 0;
           let totalDowntime = 0;
 
-          wb.SheetNames.forEach(sheetName => {
+          results.forEach(bstr => {
+            const wb = XLSX.read(bstr, { type: 'binary' });
+            wb.SheetNames.forEach(sheetName => {
             const ws = wb.Sheets[sheetName];
             const json = XLSX.utils.sheet_to_json(ws);
             if (!json || json.length === 0) return;
@@ -128,8 +130,8 @@ function DigitalFactory() {
               const hurdaMiktar = getKey(row, ["Hurda Miktarı", "Hurda Miktari"]);
               if (hurdaMiktar) totalScrap += parseNumber(hurdaMiktar);
 
-              const durusSuresi = getKey(row, ["Toplam Süre(dk)", "Toplam Süre", "Duruş", "Durus", "Duruş Süresi", "Durus Suresi", "Downtime"]);
-              const durusNedeni = getKey(row, ["Duruş Nedeni", "Durus Nedeni", "Duruş Tipi", "Çağrı Nedeni", "Sebep", "Açıklama", "Neden"]);
+              const durusSuresi = getKey(row, ["Toplam Süre(dk)", "Toplam Süre", "Duruş Süresi", "Durus Suresi", "Downtime", "Sure", "Süre"]);
+              const durusNedeni = getKey(row, ["Duruş Tipi", "Duruş Nedeni", "Durus Nedeni", "Çağrı Nedeni", "Sebep", "Açıklama", "Neden", "Duruş", "Durus"]);
               const pDurusSuresi = parseNumber(durusSuresi);
               if (pDurusSuresi > 0) totalDowntime += pDurusSuresi;
 
@@ -169,7 +171,7 @@ function DigitalFactory() {
                 }
               }
             });
-          });
+          }); // end results.forEach
 
           // Process and aggregate scrap records for each machine
           Object.keys(parsedMachines).forEach(key => {
@@ -246,8 +248,7 @@ function DigitalFactory() {
         } catch (error) {
           console.error("Error parsing Excel:", error);
         }
-      };
-      reader.readAsBinaryString(files[0]);
+      });
       e.target.value = ''; // Reset input to allow re-uploading same file
     }
   };
