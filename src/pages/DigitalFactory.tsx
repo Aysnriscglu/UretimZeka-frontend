@@ -131,7 +131,7 @@ function DigitalFactory() {
               if (hurdaMiktar) totalScrap += parseNumber(hurdaMiktar);
 
               const durusSuresi = getKey(row, ["Müdahale Süresi(dk)", "Müdahale Süresi", "Çağrı Süresi(dk)", "Çağrı Süresi", "Toplam Süre(dk)", "Toplam Süre", "Duruş Süresi", "Durus Suresi", "Downtime", "Sure", "Süre"]);
-              const durusNedeni = getKey(row, ["Duruş Adı", "Durus Adi", "Duruş Tipi", "Duruş Nedeni", "Durus Nedeni", "Çağrı Nedeni", "Sebep", "Açıklama", "Neden", "Duruş", "Durus"]);
+              const durusNedeni = getKey(row, ["Arıza Tipi", "Ariza Tipi", "Duruş Adı", "Durus Adi", "Duruş Tipi", "Duruş Nedeni", "Durus Nedeni", "Çağrı Nedeni", "Sebep", "Açıklama", "Neden", "Duruş", "Durus"]);
               const pDurusSuresi = parseNumber(durusSuresi);
               if (pDurusSuresi > 0) totalDowntime += pDurusSuresi;
 
@@ -162,9 +162,9 @@ function DigitalFactory() {
                    });
                 }
                 
-                if (durusNedeni && pDurusSuresi > 0) {
+                if (pDurusSuresi > 0) {
                    parsedMachines[mappedMachine].downtimeRecords.push({
-                      reason: String(durusNedeni),
+                      reason: durusNedeni ? String(durusNedeni) : "Bilinmeyen Neden",
                       amount: pDurusSuresi,
                       date: tarih ? String(tarih).split(' ')[0] : 'Bilinmiyor'
                    });
