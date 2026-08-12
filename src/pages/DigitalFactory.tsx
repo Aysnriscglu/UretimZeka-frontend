@@ -43,7 +43,7 @@ const defaultMachineDataMap: Record<string, any> = {
 const parseNumber = (val: any) => {
   if (val === null || val === undefined || val === '') return 0;
   if (typeof val === 'number') return val;
-  const str = String(val).replace(',', '.');
+  const str = String(val).replace(/[^0-9,\.-]/g, '').replace(',', '.');
   const num = Number(str);
   return isNaN(num) ? 0 : num;
 };
@@ -67,8 +67,8 @@ const getKey = (obj: any, possibleKeys: string[]) => {
 };
 
 // Excel'deki Is Merkezi isimlerini bizim makine isimlerimize cevir
-const mapMachineName = (rawName: string) => {
-  if (!rawName) return null;
+const mapMachineName = (rawName: any) => {
+  if (!rawName || typeof rawName !== 'string') return null;
   const name = rawName.toUpperCase();
   if (name.includes("KALİBRE") || name.includes("KALIBRE")) return "Kalibre Presi";
   if (name.includes("AĞIZ") || name.includes("AGIZ")) return "Ağız Açma";
@@ -115,8 +115,18 @@ function DigitalFactory() {
             if (!json || json.length === 0) return;
 
             json.forEach((row: any) => {
-              const rawMachine = getKey(row, ["İş Merkezi_2", "İş Merkezi_1", "İş Merkezi", "Is Merkezi_2", "Is Merkezi_1", "Is Merkezi", "Makine_2", "Makine_1", "Makine"]);
-              const mappedMachine = mapMachineName(rawMachine);
+              let rawMachine = getKey(row, ["İş Merkezi_2", "İş Merkezi_1", "İş Merkezi", "Is Merkezi_2", "Is Merkezi_1", "Is Merkezi", "Makine_2", "Makine_1", "Makine"]);
+              let mappedMachine = mapMachineName(rawMachine);
+              
+              if (!mappedMachine) {
+                 for (const key of Object.keys(row)) {
+                    const potential = mapMachineName(row[key]);
+                    if (potential) {
+                       mappedMachine = potential;
+                       break;
+                    }
+                 }
+              }
               
               const uretim = getKey(row, ["Üretilen Miktar", "Uretim"]);
               if (uretim) totalProduction += parseNumber(uretim);
