@@ -250,6 +250,11 @@ function DigitalFactory() {
              }
           });
 
+          const machineWithData = Object.keys(parsedMachines).find(m => parsedMachines[m].downtimeRecords && parsedMachines[m].downtimeRecords.length > 0);
+          if (machineWithData) {
+             setSelectedMachine(machineWithData);
+          }
+
           setMachineData(parsedMachines);
         } catch (error) {
           console.error("Error parsing Excel:", error);
