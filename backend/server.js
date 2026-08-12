@@ -197,7 +197,7 @@ function summarizeExcelData(excelDataMap) {
 
 console.log("=================================");
 console.log("✅ SERVER BAŞLADI");
-console.log(`🤖 Aktif Sağlayıcı: ${process.env.AI_PROVIDER || "lmstudio"}`);
+console.log(`🤖 Aktif Sağlayıcı: ${process.env.AI_PROVIDER || "groq"}`);
 console.log(`🔗 Hedef LM Studio URL: ${process.env.LM_STUDIO_URL || "http://127.0.0.1:1234/v1"}`);
 console.log(`📁 Backend Dizini: ${__dirname}`);
 console.log("=================================");
@@ -218,7 +218,7 @@ app.post("/api/upload", upload.single("file"), (req, res) => {
 
 // AI Bağlantı Durumunu Kontrol Eden Endpoint
 app.get("/api/ai/status", async (req, res) => {
-  const provider = process.env.AI_PROVIDER || "lmstudio";
+  const provider = process.env.AI_PROVIDER || "groq";
   const url = process.env.LM_STUDIO_URL || "http://127.0.0.1:1234/v1";
   
   if (provider === "lmstudio") {
@@ -336,7 +336,7 @@ Kurallar:
 ${rulesText}
 `;
 
-    const provider = process.env.AI_PROVIDER || "lmstudio";
+    const provider = process.env.AI_PROVIDER || "groq";
     let answer = "";
     let usedModel = "";
     let usedProvider = "";
