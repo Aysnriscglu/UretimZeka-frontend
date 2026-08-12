@@ -48,18 +48,27 @@ const parseNumber = (val: any) => {
   return isNaN(num) ? 0 : num;
 };
 
+const normalizeString = (str: any) => {
+  if (!str) return '';
+  return String(str)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[\s\*\-\_\(\)\[\]\.]/g, '');
+};
+
 const getKey = (obj: any, possibleKeys: string[]) => {
   if (!obj) return undefined;
   
   for (const pk of possibleKeys) {
-    const cleanPk = pk.toLowerCase().replace(/[\s\*\-\_\(\)\[\]]/g, '');
-    const exactMatch = Object.keys(obj).find(k => k.toLowerCase().replace(/[\s\*\-\_\(\)\[\]]/g, '') === cleanPk);
+    const cleanPk = normalizeString(pk);
+    const exactMatch = Object.keys(obj).find(k => normalizeString(k) === cleanPk);
     if (exactMatch) return obj[exactMatch];
   }
 
   for (const pk of possibleKeys) {
-    const cleanPk = pk.toLowerCase().replace(/[\s\*\-\_\(\)\[\]]/g, '');
-    const includesMatch = Object.keys(obj).find(k => k.toLowerCase().replace(/[\s\*\-\_\(\)\[\]]/g, '').includes(cleanPk));
+    const cleanPk = normalizeString(pk);
+    const includesMatch = Object.keys(obj).find(k => normalizeString(k).includes(cleanPk));
     if (includesMatch) return obj[includesMatch];
   }
   
@@ -69,19 +78,19 @@ const getKey = (obj: any, possibleKeys: string[]) => {
 // Excel'deki Is Merkezi isimlerini bizim makine isimlerimize cevir
 const mapMachineName = (rawName: any) => {
   if (!rawName || typeof rawName !== 'string') return null;
-  const name = rawName.toUpperCase();
-  if (name.includes("KALİBRE") || name.includes("KALIBRE")) return "Kalibre Presi";
-  if (name.includes("AĞIZ") || name.includes("AGIZ")) return "Ağız Açma";
-  if (name.includes("MERDANE")) return "Merdane";
-  if (name.includes("MARKA")) return "Marka";
-  if (name.includes("ALIN")) return "Alınkaynak";
-  if (name.includes("ROLE 1") || name.includes("RÖLE 1")) return "Role 1";
-  if (name.includes("ROLE 2") || name.includes("RÖLE 2")) return "Role 2";
-  if (name.includes("ROLE 3") || name.includes("RÖLE 3")) return "Role 3";
-  if (name.includes("RADÜS") || name.includes("RADUS")) return "Radüs Torna";
-  if (name.includes("SUBAP")) return "Subap Delme";
-  if (name.includes("MONTAJ")) return "Montaj Presi";
-  if (name.includes("ÜTÜ") || name.includes("UTU")) return "Ütü Presi";
+  const name = normalizeString(rawName);
+  if (name.includes("kalibre")) return "Kalibre Presi";
+  if (name.includes("agiz") || name.includes("agz")) return "Ağız Açma";
+  if (name.includes("merdane")) return "Merdane";
+  if (name.includes("marka")) return "Marka";
+  if (name.includes("alin")) return "Alınkaynak";
+  if (name.includes("role1")) return "Role 1";
+  if (name.includes("role2")) return "Role 2";
+  if (name.includes("role3")) return "Role 3";
+  if (name.includes("radus")) return "Radüs Torna";
+  if (name.includes("subap")) return "Subap Delme";
+  if (name.includes("montaj")) return "Montaj Presi";
+  if (name.includes("utu")) return "Ütü Presi";
   return null;
 };
 
