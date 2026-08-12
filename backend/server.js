@@ -10,6 +10,12 @@ import XLSX from "xlsx";
 import multer from "multer";
 import Groq from "groq-sdk";
 import OpenAI from "openai";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import db, { runAsync, getAsync } from "./db.js";
+import { sendVerificationEmail, sendPasswordResetEmail } from "./mailer.js";
+
+const JWT_SECRET = process.env.JWT_SECRET || "opex-super-secret-key-1234";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -201,6 +207,143 @@ console.log(`🤖 Aktif Sağlayıcı: ${process.env.AI_PROVIDER || "groq"}`);
 console.log(`🔗 Hedef LM Studio URL: ${process.env.LM_STUDIO_URL || "http://127.0.0.1:1234/v1"}`);
 console.log(`📁 Backend Dizini: ${__dirname}`);
 console.log("=================================");
+
+
+// --- AUTH ENDPOINTS ---
+
+// 1. Register
+app.post("/api/auth/register", async (req, res) => {
+  try {
+    const { username, email, password } = req.body;
+    if (!username || !email || !password) {
+      return res.status(400).json({ success: false, message: "Lütfen tüm alanları doldurun." });
+    }
+
+    const existingUser = await getAsync("SELECT id FROM users WHERE username = ? OR email = ?", [username, email]);
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: "Bu kullanıcı adı veya e-posta zaten kayıtlı." });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(password, salt);
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString(); // 6 hane
+
+    await runAsync(
+      "INSERT INTO users (username, email, password_hash, verification_code) VALUES (?, ?, ?, ?)",
+      [username, email, passwordHash, verificationCode]
+    );
+
+    await sendVerificationEmail(email, verificationCode);
+
+    res.json({ success: true, message: "Kayıt başarılı! Lütfen e-postanıza gönderilen onay kodunu girin." });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Kayıt işlemi başarısız oldu." });
+  }
+});
+
+// 2. Verify OTP
+app.post("/api/auth/verify", async (req, res) => {
+  try {
+    const { email, code } = req.body;
+    
+    const user = await getAsync("SELECT * FROM users WHERE email = ?", [email]);
+    if (!user) return res.status(400).json({ success: false, message: "Kullanıcı bulunamadı." });
+    
+    if (user.is_verified) {
+      return res.json({ success: true, message: "Hesap zaten onaylanmış." });
+    }
+
+    if (user.verification_code !== code) {
+      return res.status(400).json({ success: false, message: "Onay kodu hatalı!" });
+    }
+
+    await runAsync("UPDATE users SET is_verified = 1, verification_code = NULL WHERE email = ?", [email]);
+    res.json({ success: true, message: "Hesabınız başarıyla onaylandı. Giriş yapabilirsiniz." });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Onay işlemi başarısız oldu." });
+  }
+});
+
+// 3. Login
+app.post("/api/auth/login", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    
+    const user = await getAsync("SELECT * FROM users WHERE username = ? OR email = ?", [username, username]);
+    if (!user) {
+      return res.status(400).json({ success: false, message: "Kullanıcı adı veya şifre hatalı!" });
+    }
+
+    const validPassword = await bcrypt.compare(password, user.password_hash);
+    if (!validPassword) {
+      return res.status(400).json({ success: false, message: "Kullanıcı adı veya şifre hatalı!" });
+    }
+
+    if (!user.is_verified) {
+      const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+      await runAsync("UPDATE users SET verification_code = ? WHERE id = ?", [verificationCode, user.id]);
+      await sendVerificationEmail(user.email, verificationCode);
+      return res.status(403).json({ 
+        success: false, 
+        message: "Hesabınız onaylanmamış! E-postanıza yeni bir onay kodu gönderdik.",
+        needsVerification: true,
+        email: user.email
+      });
+    }
+
+    const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '24h' });
+    res.json({ success: true, message: "Giriş başarılı", token });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Giriş işlemi başarısız oldu." });
+  }
+});
+
+// 4. Forgot Password
+app.post("/api/auth/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await getAsync("SELECT * FROM users WHERE email = ?", [email]);
+    
+    if (!user) {
+      return res.status(400).json({ success: false, message: "Bu e-posta adresi sistemde kayıtlı değil." });
+    }
+
+    const resetToken = Math.floor(100000 + Math.random() * 900000).toString();
+    await runAsync("UPDATE users SET reset_token = ? WHERE email = ?", [resetToken, email]);
+    
+    await sendPasswordResetEmail(email, resetToken);
+    res.json({ success: true, message: "Şifre sıfırlama kodu e-posta adresinize gönderildi." });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "İşlem başarısız." });
+  }
+});
+
+// 5. Reset Password
+app.post("/api/auth/reset-password", async (req, res) => {
+  try {
+    const { email, code, newPassword } = req.body;
+    
+    const user = await getAsync("SELECT * FROM users WHERE email = ?", [email]);
+    if (!user || user.reset_token !== code) {
+      return res.status(400).json({ success: false, message: "Geçersiz e-posta veya sıfırlama kodu." });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(newPassword, salt);
+
+    await runAsync("UPDATE users SET password_hash = ?, reset_token = NULL WHERE email = ?", [passwordHash, email]);
+    res.json({ success: true, message: "Şifreniz başarıyla güncellendi. Giriş yapabilirsiniz." });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Şifre sıfırlama işlemi başarısız oldu." });
+  }
+});
+
+// --- AUTH ENDPOINTS FINISH ---
 
 
 // Dosya Yükleme Endpoint'i
