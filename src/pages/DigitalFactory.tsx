@@ -138,6 +138,11 @@ function DigitalFactory() {
               const durusNedeni = getKey(row, ["Arıza Tipi", "Ariza Tipi", "Duruş Adı", "Durus Adi", "Duruş Tipi", "Duruş Nedeni", "Durus Nedeni", "Çağrı Nedeni", "Sebep", "Açıklama", "Neden", "Duruş", "Durus"]);
               const technician = getKey(row, ["Müdahale Eden", "Teknisyen", "Bakımcı", "Gideren", "Sorumlu", "Personel"]);
               const solution = getKey(row, ["Çözüm", "Cozum", "M. Bitiş Yorumu", "Yapılan İşlem", "Yapilan Islem", "Aksiyon"]);
+              const priority = getKey(row, ["Önem Derecesi", "Onem Derecesi", "Önem", "Onem", "Priority"]);
+              const status = getKey(row, ["Durum", "Status"]);
+              const callType = getKey(row, ["Çağrı Tipi", "Cagri Tipi", "Tip", "Type"]);
+              const caller = getKey(row, ["Çağrıyı Açan", "Cagriyi Acan", "Bildiren", "Caller"]);
+              
               const pDurusSuresi = parseNumber(durusSuresi);
               if (pDurusSuresi > 0) totalDowntime += pDurusSuresi;
 
@@ -168,13 +173,18 @@ function DigitalFactory() {
                    });
                 }
                 
-                if (pDurusSuresi > 0) {
+                // Tüm çağrıları kaydet (süresi 0 olsa bile, açık çağrı olabilir)
+                if (durusNedeni || caller || callType) {
                    parsedMachines[mappedMachine].downtimeRecords.push({
                       reason: durusNedeni ? String(durusNedeni) : "Bilinmeyen Neden",
                       amount: pDurusSuresi,
                       date: tarih ? String(tarih).split(' ')[0] : 'Bilinmiyor',
                       technician: technician ? String(technician) : null,
-                      solution: solution ? String(solution) : null
+                      solution: solution ? String(solution) : null,
+                      priority: priority ? String(priority) : null,
+                      status: status ? String(status) : null,
+                      callType: callType ? String(callType) : null,
+                      caller: caller ? String(caller) : null
                    });
                 }
               }
@@ -208,31 +218,18 @@ function DigitalFactory() {
                 }
              }
 
-             // Hesaplama
-             if (machine.machineProduction > 0) {
-                 const scrapRate = (machine.machineScrap || 0) / machine.machineProduction;
-                 let calculatedScore = 100 - Math.round(scrapRate * 100);
-                 if (calculatedScore < 0) calculatedScore = 0;
-                 if (calculatedScore > 100) calculatedScore = 100;
-                 machine.score = calculatedScore;
+             if (dRecords.length > 0) {
+                 const openCalls = dRecords.filter((r: any) => r.status && r.status.toLowerCase().includes('açık') || r.status === 'Beklemede' || !r.status?.toLowerCase().includes('tamamlandı'));
                  
-             } else if (machine.totalMachineDowntime > 0) {
-                 // Uretim yok ama durus var. Her 10 dk durus 1 puan dusursun
-                 let calculatedScore = 100 - Math.min(100, Math.round(machine.totalMachineDowntime / 10));
-                 if (calculatedScore < 0) calculatedScore = 0;
-                 machine.score = calculatedScore;
-             }
-             
-             if (machine.machineProduction > 0 || machine.totalMachineDowntime > 0) {
-                 if (machine.score >= 85) {
-                     machine.status = "NORMAL";
-                     machine.statusColor = "#10b981";
-                 } else if (machine.score >= 60) {
+                 if (openCalls.length > 0) {
+                     machine.status = "KRİTİK";
+                     machine.statusColor = "#ef4444";
+                 } else if (machine.totalMachineDowntime > 60) {
                      machine.status = "UYARI";
                      machine.statusColor = "#f59e0b";
                  } else {
-                     machine.status = "KRİTİK";
-                     machine.statusColor = "#ef4444";
+                     machine.status = "NORMAL";
+                     machine.statusColor = "#10b981";
                  }
              }
 
@@ -318,89 +315,90 @@ function DigitalFactory() {
             </span>
           </div>
 
-          {/* Duruş Özeti Kartı */}
-          <div style={{ background: "#162539", padding: "16px 20px", borderRadius: 12, border: "1px solid #1f3a5a", marginTop: 20 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, color: "#94a3b8", fontSize: 13, marginBottom: 8, fontWeight: 500 }}>
-              <Clock3 size={16} color="#eab308" /> Toplam Duruş Süresi
+          {/* Çağrı Raporu KPI'ları */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 20 }}>
+            <div style={{ background: "#162539", padding: "16px", borderRadius: 12, border: "1px solid #1f3a5a" }}>
+              <div style={{ color: "#94a3b8", fontSize: 12, marginBottom: 8, fontWeight: 500 }}>Toplam Çağrı</div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: "#38bdf8" }}>
+                {data.downtimeRecords ? data.downtimeRecords.length : 0}
+              </div>
             </div>
-            <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-              <span style={{ fontSize: 36, fontWeight: 700, color: data.totalMachineDowntime > 0 ? "#ef4444" : "#10b981", lineHeight: 1 }}>
+            <div style={{ background: "#162539", padding: "16px", borderRadius: 12, border: "1px solid #1f3a5a" }}>
+              <div style={{ color: "#94a3b8", fontSize: 12, marginBottom: 8, fontWeight: 500 }}>Toplam Süre (dk)</div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: data.totalMachineDowntime > 0 ? "#ef4444" : "#10b981" }}>
                 {data.totalMachineDowntime ? Math.round(data.totalMachineDowntime) : 0}
-              </span>
-              <span style={{ color: "#94a3b8", fontSize: 16, fontWeight: 500 }}>dk</span>
+              </div>
             </div>
           </div>
 
-          {/* Duruş Nedenleri Listesi */}
-          {data.topDowntimes && data.topDowntimes.length > 0 ? (
+          <div style={{ background: "#162539", padding: "16px", borderRadius: 12, border: "1px solid #1f3a5a", marginTop: 12 }}>
+             <div style={{ color: "#94a3b8", fontSize: 12, marginBottom: 8, fontWeight: 500 }}>Açık / Bekleyen Çağrılar</div>
+             <div style={{ fontSize: 24, fontWeight: 700, color: "#f59e0b" }}>
+               {data.downtimeRecords ? data.downtimeRecords.filter((r: any) => r.status && (!r.status.toLowerCase().includes('tamamlandı') || r.status.toLowerCase().includes('açık'))).length : 0}
+             </div>
+          </div>
+
+          {/* Detaylı Çağrı Listesi */}
+          {data.downtimeRecords && data.downtimeRecords.length > 0 ? (
             <div style={{ marginTop: 24 }}>
               <h4 style={{ color: "#cbd5e1", marginBottom: 12, fontSize: 14, fontWeight: 600 }}>
-                En Sık Yaşanan Duruş Nedenleri
+                Çağrı ve Bakım Geçmişi
               </h4>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {data.topDowntimes.map((dw: any, index: number) => (
-                  <div key={index} style={{ background: "#1b2d45", padding: "12px 16px", borderRadius: 8, display: "flex", justifyContent: "space-between", alignItems: "center", borderLeft: `3px solid ${index === 0 ? "#ef4444" : "#f59e0b"}` }}>
-                    <span style={{ color: "#e2e8f0", fontSize: 13, fontWeight: 500, maxWidth: "75%", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={dw.reason}>
-                      {dw.reason}
-                    </span>
-                    <strong style={{ color: index === 0 ? "#ef4444" : "#f59e0b", fontSize: 14 }}>{Math.round(dw.amount)} dk</strong>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {[...data.downtimeRecords].reverse().map((rec: any, idx: number) => {
+                  const isOpen = rec.status && (!rec.status.toLowerCase().includes('tamamlandı') || rec.status.toLowerCase().includes('açık'));
+                  return (
+                  <div key={idx} style={{ background: "#162d48", padding: "16px", borderRadius: 8, borderLeft: `4px solid ${isOpen ? '#f59e0b' : '#10b981'}`, borderTop: "1px solid #1f3a5a", borderRight: "1px solid #1f3a5a", borderBottom: "1px solid #1f3a5a" }}>
+                    
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+                       <div>
+                         <div style={{ color: "#38bdf8", fontSize: 11, fontWeight: 700, textTransform: "uppercase", marginBottom: 4, letterSpacing: 0.5 }}>
+                           {rec.callType || "GENEL"} ÇAĞRI
+                         </div>
+                         <strong style={{ color: "#f8fafc", fontSize: 14, display: "block", lineHeight: 1.3 }}>{rec.reason}</strong>
+                       </div>
+                       <div style={{ textAlign: "right" }}>
+                         <span style={{ display: "inline-block", padding: "2px 8px", borderRadius: 12, fontSize: 11, fontWeight: 600, background: isOpen ? "#f59e0b20" : "#10b98120", color: isOpen ? "#f59e0b" : "#10b981", marginBottom: 4 }}>
+                           {rec.status || (isOpen ? "Açık" : "Tamamlandı")}
+                         </span>
+                         <div style={{ color: "#ef4444", fontSize: 13, fontWeight: 700 }}>
+                           {Math.round(rec.amount)} dk
+                         </div>
+                       </div>
+                    </div>
+                    
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, fontSize: 12, color: "#94a3b8", background: "#0f172a", padding: "10px", borderRadius: "6px", marginBottom: (rec.solution ? 8 : 0) }}>
+                      <div>
+                        <span style={{ color: "#64748b", display: "block", fontSize: 10 }}>Çağrıyı Açan</span>
+                        <span style={{ color: "#e2e8f0" }}>{rec.caller || "-"}</span>
+                      </div>
+                      <div>
+                        <span style={{ color: "#64748b", display: "block", fontSize: 10 }}>Müdahale Eden</span>
+                        <span style={{ color: "#e2e8f0" }}>{rec.technician || "-"}</span>
+                      </div>
+                      {rec.priority && (
+                         <div style={{ gridColumn: "span 2", marginTop: 4 }}>
+                           <span style={{ color: "#64748b", display: "block", fontSize: 10 }}>Önem Derecesi</span>
+                           <span style={{ color: rec.priority.toLowerCase().includes('yüksek') ? '#ef4444' : '#e2e8f0' }}>{rec.priority}</span>
+                         </div>
+                      )}
+                    </div>
+
+                    {rec.solution && (
+                      <div style={{ fontSize: 12, color: "#cbd5e1", background: "#1e3a5f", padding: "10px", borderRadius: "6px" }}>
+                        <span style={{ color: "#38bdf8", fontWeight: 600, display: "block", fontSize: 11, marginBottom: 2 }}>Çözüm / Yapılan İşlem:</span>
+                        {rec.solution}
+                      </div>
+                    )}
                   </div>
-                ))}
+                )})}
               </div>
             </div>
           ) : (
             <div style={{ marginTop: 24, background: "#1b2d45", padding: 20, borderRadius: 8, textAlign: "center", color: "#64748b", fontSize: 13, border: "1px dashed #334155" }}>
-              Seçili makine için henüz duruş kaydı bulunmuyor. Lütfen güncel raporu yükleyin. Veya verisi olan başka bir makine seçin.
+              Seçili makine için henüz çağrı kaydı bulunmuyor. Lütfen güncel raporu yükleyin.
             </div>
           )}
-
-          {/* Son Bakım & Müdahale Kayıtları */}
-          {data.downtimeRecords && data.downtimeRecords.length > 0 && (
-            <div style={{ marginTop: 24 }}>
-              <h4 style={{ color: "#cbd5e1", marginBottom: 12, fontSize: 14, fontWeight: 600 }}>
-                Son Bakım & Müdahale Kayıtları
-              </h4>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {[...data.downtimeRecords].reverse().slice(0, 5).map((rec: any, idx: number) => (
-                  <div key={idx} style={{ background: "#162d48", padding: "12px", borderRadius: 8, borderLeft: `3px solid #38bdf8`, border: "1px solid #1f3a5a" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                       <strong style={{ color: "#e2e8f0", fontSize: 13 }}>{rec.reason}</strong>
-                       <span style={{ color: "#ef4444", fontSize: 12, fontWeight: 600 }}>{Math.round(rec.amount)} dk</span>
-                    </div>
-                    {(rec.technician || rec.solution) && (
-                      <div style={{ fontSize: 12, color: "#94a3b8", display: "flex", flexDirection: "column", gap: 4, background: "#0f172a", padding: "8px", borderRadius: "6px" }}>
-                        {rec.technician && <div><strong style={{ color: "#64748b" }}>Teknisyen:</strong> {rec.technician}</div>}
-                        {rec.solution && <div><strong style={{ color: "#64748b" }}>Çözüm:</strong> {rec.solution}</div>}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Yapay Zeka Uyarıları */}
-          <div className="ai-recommendations" style={{ padding: 16, borderRadius: 12, marginTop: 24, background: "#162d48", border: "1px solid #1f3a5a" }}>
-            <div className="ai-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, color: "white", fontWeight: 600 }}>
-                <Brain size={18} color="#39bdf8" /> Yapay Zekâ Analizi
-              </div>
-              <div className="badge" style={{ width: 24, height: 24, borderRadius: "50%", background: data.alertsCount > 0 ? "#ef4444" : "#10b981", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 600 }}>
-                {data.alertsCount || 0}
-              </div>
-            </div>
-
-            <div className="ai-warning" style={{ padding: 14, borderRadius: 8, background: "#1b2d45", borderLeft: `4px solid ${data.alertsCount > 0 ? "#ef4444" : "#10b981"}` }}>
-              <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                <AlertTriangle size={18} color={data.alertsCount > 0 ? "#ef4444" : "#10b981"} style={{ flexShrink: 0, marginTop: 2 }} />
-                <div>
-                  <p style={{ margin: 0, color: "#d2dbe7", fontSize: 13, lineHeight: 1.5 }}>
-                    {data.aiWarning || "Makine stabil görünüyor. Önemli bir duruş tespit edilmedi."}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
         </aside>
       </section>
     </>
