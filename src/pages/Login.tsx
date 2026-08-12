@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Box, Button, TextField, Typography, Paper, InputAdornment } from "@mui/material";
-import { User, Lock } from "lucide-react";
+import { User, Lock, Mail } from "lucide-react";
 import { keyframes } from "@emotion/react";
 
 const fadeIn = keyframes`
@@ -18,16 +18,27 @@ const fadeIn = keyframes`
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
+  const [isLogin, setIsLogin] = useState(true);
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (username.trim().toLowerCase() === "admin" && password.trim() === "1234") {
-      localStorage.setItem("isAuthenticated", "true");
-      navigate("/");
+    if (isLogin) {
+      if (username.trim().toLowerCase() === "admin" && password.trim() === "1234") {
+        localStorage.setItem("isAuthenticated", "true");
+        navigate("/");
+      } else {
+        setError("Kullanıcı adı veya şifre hatalı!");
+      }
     } else {
-      setError("Kullanıcı adı veya şifre hatalı!");
+      if (username && password && email) {
+        alert("Kayıt başarılı! Lütfen giriş yapın.");
+        setIsLogin(true);
+      } else {
+        setError("Lütfen tüm alanları doldurun!");
+      }
     }
   };
 
@@ -103,7 +114,7 @@ export default function Login() {
             animation: `${fadeIn} 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards`
           }}
         >
-          <Box component="form" onSubmit={handleLogin} sx={{ display: "flex", flexDirection: "column", gap: 3.5 }}>
+          <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 3.5 }}>
             <Box textAlign="center" mb={1}>
               <Typography 
                 variant="h4" 
@@ -117,10 +128,10 @@ export default function Login() {
                   letterSpacing: "-0.5px"
                 }}
               >
-                Opex'e Hoşgeldiniz
+                {isLogin ? "Opex'e Hoşgeldiniz" : "Yeni Hesap Oluşturun"}
               </Typography>
               <Typography variant="body2" color="#94a3b8" sx={{ fontSize: "0.95rem" }}>
-                Devam etmek için lütfen hesap bilgilerinizi girin
+                {isLogin ? "Devam etmek için lütfen hesap bilgilerinizi girin" : "Sisteme katılmak için bilgilerinizi doldurun"}
               </Typography>
             </Box>
 
@@ -145,6 +156,31 @@ export default function Login() {
                 }
               }}
             />
+
+            {!isLogin && (
+              <TextField
+                placeholder="E-posta Adresi"
+                type="email"
+                variant="outlined"
+                fullWidth
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Mail color="#64748b" size={20} />
+                    </InputAdornment>
+                  ),
+                  style: { color: "white", borderRadius: 12, paddingLeft: 8 },
+                  sx: {
+                    backgroundColor: "rgba(15, 23, 42, 0.8)",
+                    "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.08)" },
+                    "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.15)" },
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#38bdf8" },
+                  }
+                }}
+              />
+            )}
 
             <TextField
               placeholder="Şifre"
@@ -200,8 +236,27 @@ export default function Login() {
                 transition: "all 0.2s ease-in-out"
               }}
             >
-              Giriş Yap
+              {isLogin ? "Giriş Yap" : "Kayıt Ol"}
             </Button>
+
+            <Box sx={{ textAlign: "center", mt: -1 }}>
+              <Typography variant="body2" color="#94a3b8">
+                {isLogin ? "Hesabınız yok mu?" : "Zaten hesabınız var mı?"}{" "}
+                <Typography 
+                  component="span" 
+                  onClick={() => { setIsLogin(!isLogin); setError(""); }}
+                  sx={{ 
+                    color: "#38bdf8", 
+                    cursor: "pointer", 
+                    fontWeight: "600",
+                    transition: "color 0.2s",
+                    "&:hover": { color: "#818cf8", textDecoration: "underline" }
+                  }}
+                >
+                  {isLogin ? "Kayıt Olun" : "Giriş Yapın"}
+                </Typography>
+              </Typography>
+            </Box>
           </Box>
         </Paper>
       </Box>
