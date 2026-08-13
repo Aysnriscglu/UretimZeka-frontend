@@ -30,7 +30,7 @@ export default function Login() {
   const [forgotStep, setForgotStep] = useState(1); // 1: Email, 2: Code & New Password
 
   // URL (Localtest API)
-  const BACKEND_URL = "http://localhost:5000";
+  const BACKEND_URL = `http://${window.location.hostname}:5000`;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
