@@ -4,17 +4,28 @@ let transporter;
 
 const initializeMailer = async () => {
     try {
-        const testAccount = await nodemailer.createTestAccount();
-        transporter = nodemailer.createTransport({
-            host: "smtp.ethereal.email",
-            port: 587,
-            secure: false,
-            auth: {
-                user: testAccount.user,
-                pass: testAccount.pass,
-            },
-        });
-        console.log("✅ Mailer (Ethereal) hazır. Test hesabı:", testAccount.user);
+        if (process.env.GMAIL_USER && process.env.GMAIL_PASS) {
+            transporter = nodemailer.createTransport({
+                service: "gmail",
+                auth: {
+                    user: process.env.GMAIL_USER,
+                    pass: process.env.GMAIL_PASS,
+                },
+            });
+            console.log("✅ Mailer (Gmail) hazır. Kullanıcı:", process.env.GMAIL_USER);
+        } else {
+            const testAccount = await nodemailer.createTestAccount();
+            transporter = nodemailer.createTransport({
+                host: "smtp.ethereal.email",
+                port: 587,
+                secure: false,
+                auth: {
+                    user: testAccount.user,
+                    pass: testAccount.pass,
+                },
+            });
+            console.log("✅ Mailer (Ethereal) hazır. Test hesabı:", testAccount.user);
+        }
     } catch (err) {
         console.error("Mailer başlatılamadı:", err);
     }

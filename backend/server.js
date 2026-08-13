@@ -208,6 +208,15 @@ console.log(`🔗 Hedef LM Studio URL: ${process.env.LM_STUDIO_URL || "http://12
 console.log(`📁 Backend Dizini: ${__dirname}`);
 console.log("=================================");
 
+// Tablo şemasını güncelle (yeni sütunlar)
+(async () => {
+  try {
+    await runAsync("ALTER TABLE users ADD COLUMN failed_login_attempts INTEGER DEFAULT 0");
+  } catch (e) { /* zaten varsa hata verir, yok sayılır */ }
+  try {
+    await runAsync("ALTER TABLE users ADD COLUMN locked_until DATETIME");
+  } catch (e) { /* zaten varsa hata verir, yok sayılır */ }
+})();
 
 // --- AUTH ENDPOINTS ---
 
@@ -226,14 +235,16 @@ app.post("/api/auth/register", async (req, res) => {
 
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString(); // 6 hane
 
-    // is_verified=1 olarak doğrudan kaydediyoruz, onay koduna gerek kalmadı
     await runAsync(
-      "INSERT INTO users (username, email, password_hash, is_verified) VALUES (?, ?, ?, 1)",
-      [username, email, passwordHash]
+      "INSERT INTO users (username, email, password_hash, verification_code, is_verified, failed_login_attempts) VALUES (?, ?, ?, ?, 0, 0)",
+      [username, email, passwordHash, verificationCode]
     );
 
-    res.json({ success: true, message: "Kayıt başarılı! Şimdi giriş yapabilirsiniz." });
+    await sendVerificationEmail(email, verificationCode);
+
+    res.json({ success: true, message: "Kayıt başarılı! Lütfen e-postanıza gönderilen onay kodunu girin." });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: "Kayıt işlemi başarısız oldu." });
@@ -274,9 +285,29 @@ app.post("/api/auth/login", async (req, res) => {
       return res.status(400).json({ success: false, message: "Kullanıcı adı veya şifre hatalı!" });
     }
 
+    // Kilit kontrolü
+    if (user.locked_until && new Date(user.locked_until) > new Date()) {
+      const remainingMinutes = Math.ceil((new Date(user.locked_until) - new Date()) / 60000);
+      return res.status(403).json({ success: false, message: `Çok fazla hatalı giriş yaptınız. Lütfen ${remainingMinutes} dakika sonra tekrar deneyin.` });
+    }
+
     const validPassword = await bcrypt.compare(password, user.password_hash);
     if (!validPassword) {
-      return res.status(400).json({ success: false, message: "Kullanıcı adı veya şifre hatalı!" });
+      const attempts = (user.failed_login_attempts || 0) + 1;
+      if (attempts >= 3) {
+        // 15 dakika kilitle
+        const lockTime = new Date(new Date().getTime() + 15 * 60000).toISOString();
+        await runAsync("UPDATE users SET failed_login_attempts = ?, locked_until = ? WHERE id = ?", [attempts, lockTime, user.id]);
+        return res.status(403).json({ success: false, message: "Çok fazla hatalı giriş yaptınız. Hesabınız 15 dakika kilitlendi." });
+      } else {
+        await runAsync("UPDATE users SET failed_login_attempts = ? WHERE id = ?", [attempts, user.id]);
+        return res.status(400).json({ success: false, message: `Hatalı şifre! (Kalan deneme hakkı: ${3 - attempts})` });
+      }
+    }
+
+    // Başarılı giriş, kilitleri sıfırla
+    if (user.failed_login_attempts > 0 || user.locked_until) {
+      await runAsync("UPDATE users SET failed_login_attempts = 0, locked_until = NULL WHERE id = ?", [user.id]);
     }
 
     if (!user.is_verified) {
