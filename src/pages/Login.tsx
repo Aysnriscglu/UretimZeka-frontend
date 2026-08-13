@@ -29,8 +29,11 @@ export default function Login() {
   const [newPassword, setNewPassword] = useState("");
   const [forgotStep, setForgotStep] = useState(1); // 1: Email, 2: Code & New Password
 
-  // URL (Localtest API or Production API)
-  const BACKEND_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`;
+  // Otomatik URL Ayarý: Eðer lokalde çalýþýyorsa localhost:5000, eðer Vercel'de ise direkt Railway linkine baðlanýr.
+  const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const BACKEND_URL = isLocal 
+    ? "http://localhost:5000" 
+    : "https://uretimzeka-frontend-production.up.railway.app";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
