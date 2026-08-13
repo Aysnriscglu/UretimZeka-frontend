@@ -29,8 +29,8 @@ export default function Login() {
   const [newPassword, setNewPassword] = useState("");
   const [forgotStep, setForgotStep] = useState(1); // 1: Email, 2: Code & New Password
 
-  // URL (Localtest API)
-  const BACKEND_URL = `http://${window.location.hostname}:5000`;
+  // URL (Localtest API or Production API)
+  const BACKEND_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
