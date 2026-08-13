@@ -94,9 +94,9 @@ export default function Login() {
           body: JSON.stringify({ username, email, password })
         });
         const data = await res.json();
-        if (data.success) {
+        if (res.ok) {
           setSuccess(data.message);
-          setNeedsOtp(true);
+          setIsLogin(true);
         } else {
           setError(data.message);
         }

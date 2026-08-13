@@ -226,16 +226,14 @@ app.post("/api/auth/register", async (req, res) => {
 
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
-    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString(); // 6 hane
 
+    // is_verified=1 olarak doğrudan kaydediyoruz, onay koduna gerek kalmadı
     await runAsync(
-      "INSERT INTO users (username, email, password_hash, verification_code) VALUES (?, ?, ?, ?)",
-      [username, email, passwordHash, verificationCode]
+      "INSERT INTO users (username, email, password_hash, is_verified) VALUES (?, ?, ?, 1)",
+      [username, email, passwordHash]
     );
 
-    await sendVerificationEmail(email, verificationCode);
-
-    res.json({ success: true, message: "Kayıt başarılı! Lütfen e-postanıza gönderilen onay kodunu girin." });
+    res.json({ success: true, message: "Kayıt başarılı! Şimdi giriş yapabilirsiniz." });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: "Kayıt işlemi başarısız oldu." });
