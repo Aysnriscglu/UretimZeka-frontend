@@ -20,6 +20,7 @@ type Machine = {
 type MachineSceneProps = {
   selectedMachine: string;
   setSelectedMachine: (machine: string) => void;
+  machineDataList?: { name: string; status: MachineStatus }[];
 };
 
 type MachineModelProps = {
@@ -30,19 +31,19 @@ type MachineModelProps = {
 
 // Makinelere endustriyel cesitlilik katmak icin ozel boya renkleri eklendi
 const spacing = 5.0;
-const machines: Machine[] = [
-  { id: 1, name: "Marka", status: "normal", position: [-spacing * 5.5, 0, 0], baseColor: "#3b82f6" },       // Mavi
-  { id: 2, name: "Merdane", status: "normal", position: [-spacing * 4.5, 0, 0], baseColor: "#64748b" },     // Gri/Metal
-  { id: 3, name: "Alınkaynak", status: "warning", position: [-spacing * 3.5, 0, 0], baseColor: "#f97316" }, // Turuncu (Robotik)
-  { id: 4, name: "Ağız Açma", status: "normal", position: [-spacing * 2.5, 0, 0], baseColor: "#14b8a6" },   // Cam Gobegi
-  { id: 5, name: "Role 1", status: "warning", position: [-spacing * 1.5, 0, 0], baseColor: "#eab308" },     // Endustriyel Sari
-  { id: 6, name: "Role 2", status: "normal", position: [-spacing * 0.5, 0, 0], baseColor: "#eab308" },      // Endustriyel Sari
-  { id: 7, name: "Role 3", status: "normal", position: [spacing * 0.5, 0, 0], baseColor: "#eab308" },       // Endustriyel Sari
-  { id: 8, name: "Kalibre Presi", status: "critical", position: [spacing * 1.5, 0, 0], baseColor: "#6366f1" }, // Indigo
-  { id: 9, name: "Radüs Torna", status: "normal", position: [spacing * 2.5, 0, 0], baseColor: "#0ea5e9" },  // Acik Mavi
-  { id: 10, name: "Subap Delme", status: "warning", position: [spacing * 3.5, 0, 0], baseColor: "#10b981" },// Zumrut Yesili
-  { id: 11, name: "Montaj Presi", status: "normal", position: [spacing * 4.5, 0, 0], baseColor: "#84cc16" }, // Limon Yesili
-  { id: 12, name: "Ütü Presi", status: "critical", position: [spacing * 5.5, 0, 0], baseColor: "#f43f5e" },  // Endustriyel Kirmizi
+const defaultMachines: Machine[] = [
+  { id: 1, name: "Makine 1", status: "normal", position: [-spacing * 5.5, 0, 0], baseColor: "#3b82f6" },       
+  { id: 2, name: "Makine 2", status: "normal", position: [-spacing * 4.5, 0, 0], baseColor: "#64748b" },     
+  { id: 3, name: "Makine 3", status: "normal", position: [-spacing * 3.5, 0, 0], baseColor: "#f97316" }, 
+  { id: 4, name: "Makine 4", status: "normal", position: [-spacing * 2.5, 0, 0], baseColor: "#14b8a6" },   
+  { id: 5, name: "Makine 5", status: "normal", position: [-spacing * 1.5, 0, 0], baseColor: "#eab308" },     
+  { id: 6, name: "Makine 6", status: "normal", position: [-spacing * 0.5, 0, 0], baseColor: "#eab308" },      
+  { id: 7, name: "Makine 7", status: "normal", position: [spacing * 0.5, 0, 0], baseColor: "#eab308" },       
+  { id: 8, name: "Makine 8", status: "normal", position: [spacing * 1.5, 0, 0], baseColor: "#6366f1" }, 
+  { id: 9, name: "Makine 9", status: "normal", position: [spacing * 2.5, 0, 0], baseColor: "#0ea5e9" },  
+  { id: 10, name: "Makine 10", status: "normal", position: [spacing * 3.5, 0, 0], baseColor: "#10b981" },
+  { id: 11, name: "Makine 11", status: "normal", position: [spacing * 4.5, 0, 0], baseColor: "#84cc16" }, 
+  { id: 12, name: "Makine 12", status: "normal", position: [spacing * 5.5, 0, 0], baseColor: "#f43f5e" },  
 ];
 
 // Durum (Hata/Uyarı) Renkleri (Sadece lambalar, zemin ve paneller icin kullanilacak)
@@ -183,7 +184,21 @@ function FactoryEnvironment() {
 function MachineScene({
   selectedMachine,
   setSelectedMachine,
+  machineDataList = []
 }: MachineSceneProps) {
+  
+  // Merge dynamic data with default 12 machine slots
+  const displayMachines = defaultMachines.map((defMachine, index) => {
+    if (machineDataList[index]) {
+      return {
+        ...defMachine,
+        name: machineDataList[index].name,
+        status: machineDataList[index].status
+      };
+    }
+    return defMachine;
+  });
+
   return (
     <Canvas shadows orthographic camera={{ position: [35, 40, 35], zoom: 11, up: [0, 1, 0] }}>
       <color attach="background" args={["#0a0f18"]} />
@@ -201,7 +216,7 @@ function MachineScene({
       <FactoryEnvironment />
       <ConveyorBelt />
 
-      {machines.map((machine) => (
+      {displayMachines.map((machine) => (
         <MachineModel
           key={machine.id}
           machine={machine}

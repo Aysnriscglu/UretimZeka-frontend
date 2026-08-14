@@ -75,30 +75,17 @@ const getKey = (obj: any, possibleKeys: string[]) => {
   return undefined;
 };
 
-// Excel'deki Is Merkezi isimlerini bizim makine isimlerimize cevir
-const mapMachineName = (rawName: any) => {
+const getMachineName = (rawName: any) => {
   if (!rawName || typeof rawName !== 'string') return null;
-  const name = normalizeString(rawName);
-  if (name.includes("kalibre")) return "Kalibre Presi";
-  if (name.includes("agiz") || name.includes("agz")) return "Ağız Açma";
-  if (name.includes("merdane")) return "Merdane";
-  if (name.includes("marka")) return "Marka";
-  if (name.includes("alin")) return "Alınkaynak";
-  if (name.includes("role1")) return "Role 1";
-  if (name.includes("role2")) return "Role 2";
-  if (name.includes("role3")) return "Role 3";
-  if (name.includes("radus")) return "Radüs Torna";
-  if (name.includes("subap")) return "Subap Delme";
-  if (name.includes("montaj")) return "Montaj Presi";
-  if (name.includes("utu")) return "Ütü Presi";
-  return null;
+  return rawName.trim();
 };
 
 function DigitalFactory() {
-  const [selectedMachine, setSelectedMachine] = useState("Kalibre Presi");
+  const [selectedMachine, setSelectedMachine] = useState("Makine 1");
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
+  const [dynamicMachineList, setDynamicMachineList] = useState<{name: string, status: any}[]>([]);
   
-  const [machineData, setMachineData] = useState(defaultMachineDataMap);
+  const [machineData, setMachineData] = useState<Record<string, any>>({});
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -111,10 +98,7 @@ function DigitalFactory() {
         reader.readAsBinaryString(file);
       }))).then(results => {
         try {
-          let parsedMachines = JSON.parse(JSON.stringify(machineData));
-          let totalProduction = 0;
-          let totalScrap = 0;
-          let totalDowntime = 0;
+          let parsedMachines: Record<string, any> = { ...machineData };
 
           results.forEach(bstr => {
             const wb = XLSX.read(bstr, { type: 'binary' });
@@ -124,42 +108,27 @@ function DigitalFactory() {
             if (!json || json.length === 0) return;
 
             json.forEach((row: any) => {
-              let rawMachine = getKey(row, ["İş Merkezi_2", "İş Merkezi_1", "İş Merkezi", "Is Merkezi_2", "Is Merkezi_1", "Is Merkezi", "Makine_2", "Makine_1", "Makine"]);
-              let mappedMachine = mapMachineName(rawMachine);
+              let rawMachine = getKey(row, ["İş Merkezi_2", "İş Merkezi_1", "İş Merkezi", "Is Merkezi_2", "Is Merkezi_1", "Is Merkezi", "Makine_2", "Makine_1", "Makine", "Makina", "Tezgah", "Hat"]);
+              let mappedMachine = getMachineName(rawMachine);
               
-              if (!mappedMachine) {
-                 for (const key of Object.keys(row)) {
-                    const potential = mapMachineName(row[key]);
-                    if (potential) {
-                       mappedMachine = potential;
-                       break;
-                    }
+              if (mappedMachine) {
+                 if (!parsedMachines[mappedMachine]) {
+                    parsedMachines[mappedMachine] = { status: "BİLGİ YOK", statusColor: "#64748b", alertsCount: 0, downtimeRecords: [], scrapRecords: [] };
                  }
-              }
-              
-              const uretim = getKey(row, ["Üretilen Miktar", "Uretim"]);
-              if (uretim) totalProduction += parseNumber(uretim);
 
-              const hurdaMiktar = getKey(row, ["Hurda Miktarı", "Hurda Miktari"]);
-              if (hurdaMiktar) totalScrap += parseNumber(hurdaMiktar);
-
-              const durusSuresi = getKey(row, ["Müdahale Süresi(dk)", "Müdahale Süresi", "Çağrı Süresi(dk)", "Çağrı Süresi", "Toplam Süre(dk)", "Toplam Süre", "Duruş Süresi", "Durus Suresi", "Downtime", "Sure", "Süre"]);
-              const durusNedeni = getKey(row, ["Arıza Tipi", "Ariza Tipi", "Duruş Adı", "Durus Adi", "Duruş Tipi", "Duruş Nedeni", "Durus Nedeni", "Çağrı Nedeni", "Sebep", "Açıklama", "Neden", "Duruş", "Durus"]);
-              const technician = getKey(row, ["Müdahale Eden", "Teknisyen", "Bakımcı", "Gideren", "Sorumlu", "Personel"]);
-              const solution = getKey(row, ["Çözüm", "Cozum", "M. Bitiş Yorumu", "Yapılan İşlem", "Yapilan Islem", "Aksiyon"]);
-              const priority = getKey(row, ["Önem Derecesi", "Onem Derecesi", "Önem", "Onem", "Priority"]);
-              const status = getKey(row, ["Durum", "Status"]);
-              const callType = getKey(row, ["Çağrı Tipi", "Cagri Tipi", "Tip", "Type"]);
-              const caller = getKey(row, ["Çağrıyı Açan", "Cagriyi Acan", "Bildiren", "Caller"]);
-              
-              const pDurusSuresi = parseNumber(durusSuresi);
-              if (pDurusSuresi > 0) totalDowntime += pDurusSuresi;
-
-              if (mappedMachine && parsedMachines[mappedMachine]) {
-                 if (!parsedMachines[mappedMachine].downtimeRecords) {
-                    parsedMachines[mappedMachine].downtimeRecords = [];
-                 }
+                 const uretim = getKey(row, ["Üretilen Miktar", "Uretim"]);
+                 const hurdaMiktar = getKey(row, ["Hurda Miktarı", "Hurda Miktari"]);
+                 const durusSuresi = getKey(row, ["Müdahale Süresi(dk)", "Müdahale Süresi", "Çağrı Süresi(dk)", "Çağrı Süresi", "Toplam Süre(dk)", "Toplam Süre", "Duruş Süresi", "Durus Suresi", "Downtime", "Sure", "Süre"]);
+                 const durusNedeni = getKey(row, ["Arıza Tipi", "Ariza Tipi", "Duruş Adı", "Durus Adi", "Duruş Tipi", "Duruş Nedeni", "Durus Nedeni", "Çağrı Nedeni", "Sebep", "Açıklama", "Neden", "Duruş", "Durus"]);
+                 const technician = getKey(row, ["Müdahale Eden", "Teknisyen", "Bakımcı", "Gideren", "Sorumlu", "Personel"]);
+                 const solution = getKey(row, ["Çözüm", "Cozum", "M. Bitiş Yorumu", "Yapılan İşlem", "Yapilan Islem", "Aksiyon"]);
+                 const priority = getKey(row, ["Önem Derecesi", "Onem Derecesi", "Önem", "Onem", "Priority"]);
+                 const status = getKey(row, ["Durum", "Status"]);
+                 const callType = getKey(row, ["Çağrı Tipi", "Cagri Tipi", "Tip", "Type"]);
+                 const caller = getKey(row, ["Çağrıyı Açan", "Cagriyi Acan", "Bildiren", "Caller"]);
                  
+                 const pDurusSuresi = parseNumber(durusSuresi);
+
                  if (uretim) {
                     parsedMachines[mappedMachine].machineProduction = (parsedMachines[mappedMachine].machineProduction || 0) + parseNumber(uretim);
                  }
@@ -171,37 +140,37 @@ function DigitalFactory() {
                     parsedMachines[mappedMachine].machineDowntime = (parsedMachines[mappedMachine].machineDowntime || 0) + pDurusSuresi;
                  }
 
-                const hurdaSebep = getKey(row, ["Hurda", "Hurda Kodu", "Hurda Sebebi"]);
-                const tarih = getKey(row, ["Tarih", "Zaman", "Ay"]);
-                
-                if (hurdaSebep && hurdaMiktar) {
-                   parsedMachines[mappedMachine].scrapRecords.push({
-                      reason: hurdaSebep,
-                      amount: parseNumber(hurdaMiktar),
-                      date: tarih ? String(tarih).split(' ')[0] : 'Bilinmiyor'
-                   });
-                }
-                
-                // Tüm çağrıları kaydet (süresi 0 olsa bile, açık çağrı olabilir)
-                if (durusNedeni || caller || callType) {
-                   parsedMachines[mappedMachine].downtimeRecords.push({
-                      reason: durusNedeni ? String(durusNedeni) : "Bilinmeyen Neden",
-                      amount: pDurusSuresi,
-                      date: tarih ? String(tarih).split(' ')[0] : 'Bilinmiyor',
-                      technician: technician ? String(technician) : null,
-                      solution: solution ? String(solution) : null,
-                      priority: priority ? String(priority) : null,
-                      status: status ? String(status) : null,
-                      callType: callType ? String(callType) : null,
-                      caller: caller ? String(caller) : null
-                   });
-                }
+                 const hurdaSebep = getKey(row, ["Hurda", "Hurda Kodu", "Hurda Sebebi"]);
+                 const tarih = getKey(row, ["Tarih", "Zaman", "Ay"]);
+                 
+                 if (hurdaSebep && hurdaMiktar) {
+                    parsedMachines[mappedMachine].scrapRecords.push({
+                       reason: hurdaSebep,
+                       amount: parseNumber(hurdaMiktar),
+                       date: tarih ? String(tarih).split(' ')[0] : 'Bilinmiyor'
+                    });
+                 }
+                 
+                 // Tüm çağrıları kaydet
+                 if (durusNedeni || caller || callType) {
+                    parsedMachines[mappedMachine].downtimeRecords.push({
+                       reason: durusNedeni ? String(durusNedeni) : "Bilinmeyen Neden",
+                       amount: pDurusSuresi,
+                       date: tarih ? String(tarih).split(' ')[0] : 'Bilinmiyor',
+                       technician: technician ? String(technician) : null,
+                       solution: solution ? String(solution) : null,
+                       priority: priority ? String(priority) : null,
+                       status: status ? String(status) : null,
+                       callType: callType ? String(callType) : null,
+                       caller: caller ? String(caller) : null
+                    });
+                 }
               }
             });
             }); // end wb.SheetNames.forEach
           }); // end results.forEach
 
-          // Process and aggregate scrap records for each machine
+          // Process and aggregate records for each machine
           Object.keys(parsedMachines).forEach(key => {
              const machine = parsedMachines[key];
              const records = machine.scrapRecords;
@@ -222,7 +191,7 @@ function DigitalFactory() {
                 machine.totalMachineDowntime = dRecords.reduce((sum: number, r: any) => sum + r.amount, 0);
                 
                 if (sortedDowntimes.length > 0) {
-                   machine.issue = sortedDowntimes[0].reason; // Set latest issue to top downtime reason
+                   machine.issue = sortedDowntimes[0].reason;
                    machine.aiWarning = `Son günlerde en çok zaman kaybı (${Math.round(sortedDowntimes[0].amount)} dk) '${sortedDowntimes[0].reason}' nedeniyle yaşandı.`;
                    machine.alertsCount = dRecords.length;
                 }
@@ -259,9 +228,17 @@ function DigitalFactory() {
              }
           });
 
-          const machineWithData = Object.keys(parsedMachines).find(m => parsedMachines[m].downtimeRecords && parsedMachines[m].downtimeRecords.length > 0);
-          if (machineWithData) {
-             setSelectedMachine(machineWithData);
+          // Top 12 makineleri sec (durus suresi ve cagrı sayısına gore siralayalim)
+          const allMachinesList = Object.keys(parsedMachines).map(name => ({
+             name,
+             totalDowntime: parsedMachines[name].totalMachineDowntime || 0,
+             status: parsedMachines[name].status === "KRİTİK" ? "critical" : parsedMachines[name].status === "UYARI" ? "warning" : "normal"
+          })).sort((a, b) => b.totalDowntime - a.totalDowntime).slice(0, 12);
+          
+          setDynamicMachineList(allMachinesList);
+
+          if (allMachinesList.length > 0) {
+             setSelectedMachine(allMachinesList[0].name);
           }
 
           setMachineData(parsedMachines);
@@ -273,7 +250,7 @@ function DigitalFactory() {
     }
   };
 
-  const data = machineData[selectedMachine] || machineData["Kalibre Presi"];
+  const data = machineData[selectedMachine] || { status: "BİLGİ YOK", statusColor: "#64748b", alertsCount: 0 };
   const IssueIcon = data.alertsCount > 0 || data.status === "KRİTİK" || data.status === "UYARI" ? AlertTriangle : CheckCircle2;
 
   return (
@@ -319,7 +296,7 @@ function DigitalFactory() {
 
       <section className="factory-layout">
         <div className="factory-scene">
-          <MachineScene selectedMachine={selectedMachine} setSelectedMachine={setSelectedMachine} />
+          <MachineScene selectedMachine={selectedMachine} setSelectedMachine={setSelectedMachine} machineDataList={dynamicMachineList} />
         </div>
 
         <aside className="machine-panel" style={{ overflowY: "auto", paddingRight: 8 }}>
