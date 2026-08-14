@@ -198,7 +198,11 @@ function DigitalFactory() {
              }
 
              if (dRecords.length > 0) {
-                 const openCalls = dRecords.filter((r: any) => r.status && r.status.toLowerCase().includes('açık') || r.status === 'Beklemede' || !r.status?.toLowerCase().includes('tamamlandı'));
+                 const openCalls = dRecords.filter((r: any) => {
+                     if (!r.status) return false;
+                     const s = String(r.status).toLowerCase();
+                     return s.includes('açık') || s.includes('beklemede') || s.includes('devam');
+                 });
                  
                  if (openCalls.length > 0) {
                      machine.status = "KRİTİK";
@@ -326,7 +330,11 @@ function DigitalFactory() {
           <div style={{ background: "#162539", padding: "16px", borderRadius: 12, border: "1px solid #1f3a5a", marginTop: 12 }}>
              <div style={{ color: "#94a3b8", fontSize: 12, marginBottom: 8, fontWeight: 500 }}>Açık / Bekleyen Çağrılar</div>
              <div style={{ fontSize: 24, fontWeight: 700, color: "#f59e0b" }}>
-               {data.downtimeRecords ? data.downtimeRecords.filter((r: any) => r.status && (!r.status.toLowerCase().includes('tamamlandı') || r.status.toLowerCase().includes('açık'))).length : 0}
+               {data.downtimeRecords ? data.downtimeRecords.filter((r: any) => {
+                  if (!r.status) return false;
+                  const s = String(r.status).toLowerCase();
+                  return s.includes('açık') || s.includes('beklemede') || s.includes('devam');
+               }).length : 0}
              </div>
           </div>
 
@@ -338,7 +346,7 @@ function DigitalFactory() {
               </h4>
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 {[...data.downtimeRecords].reverse().slice(0, 15).map((rec: any, idx: number) => {
-                  const isOpen = rec.status && (!rec.status.toLowerCase().includes('tamamlandı') || rec.status.toLowerCase().includes('açık'));
+                  const isOpen = rec.status ? (String(rec.status).toLowerCase().includes('açık') || String(rec.status).toLowerCase().includes('beklemede')) : false;
                   return (
                   <div key={idx} style={{ background: "#162d48", padding: "16px", borderRadius: 8, borderLeft: `4px solid ${isOpen ? '#f59e0b' : '#10b981'}`, borderTop: "1px solid #1f3a5a", borderRight: "1px solid #1f3a5a", borderBottom: "1px solid #1f3a5a" }}>
                     
