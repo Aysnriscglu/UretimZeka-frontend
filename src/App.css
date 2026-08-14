@@ -152,10 +152,10 @@
 
 .factory-layout{
     display:grid;
-    grid-template-columns:minmax(0,1fr) 320px;
+    grid-template-columns:minmax(0,1fr) 350px;
     gap:18px;
-
-    min-height:700px;
+    height: calc(100vh - 140px);
+    min-height: 600px;
 }
 
 .factory-scene {

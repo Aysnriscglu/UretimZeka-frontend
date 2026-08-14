@@ -337,7 +337,7 @@ function DigitalFactory() {
                 Çağrı ve Bakım Geçmişi
               </h4>
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {[...data.downtimeRecords].reverse().map((rec: any, idx: number) => {
+                {[...data.downtimeRecords].reverse().slice(0, 15).map((rec: any, idx: number) => {
                   const isOpen = rec.status && (!rec.status.toLowerCase().includes('tamamlandı') || rec.status.toLowerCase().includes('açık'));
                   return (
                   <div key={idx} style={{ background: "#162d48", padding: "16px", borderRadius: 8, borderLeft: `4px solid ${isOpen ? '#f59e0b' : '#10b981'}`, borderTop: "1px solid #1f3a5a", borderRight: "1px solid #1f3a5a", borderBottom: "1px solid #1f3a5a" }}>
