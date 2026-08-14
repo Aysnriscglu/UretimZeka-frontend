@@ -7,7 +7,6 @@ import ExcelUpload from "../compenents/maintenance/Upload/ExcelUpload";
 import KPICards from "../compenents/maintenance/KPIs/KPICards";
 import CallReasonChart from "../compenents/maintenance/Charts/CallReasonChart";
 import WorkCenterChart from "../compenents/maintenance/Charts/WorkCenterChart";
-import CallTable from "../compenents/maintenance/Tables/CallTable";
 import RootCauseSection from "../compenents/maintenance/RootCause/RootCauseSection";
 import { readExcel } from "../Services/excelService";
 
@@ -54,7 +53,6 @@ export default function Maintenance() {
         </Grid>
       </Grid>
 
-      <CallTable rows={rows} />
 
       <RootCauseSection rows={rows} />
     </Container>
