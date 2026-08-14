@@ -12,10 +12,12 @@ import Groq from "groq-sdk";
 import OpenAI from "openai";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import db, { runAsync, getAsync } from "./db.js";
 import { sendVerificationEmail, sendPasswordResetEmail } from "./mailer.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "opex-super-secret-key-1234";
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -235,19 +237,19 @@ app.post("/api/auth/register", async (req, res) => {
 
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
-    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString(); // 6 hane
+    const verificationCode = crypto.randomBytes(32).toString('hex'); // 64 karakterli token
 
     await runAsync(
       "INSERT INTO users (username, email, password_hash, verification_code, is_verified, failed_login_attempts) VALUES (?, ?, ?, ?, 0, 0)",
       [username, email, passwordHash, verificationCode]
     );
 
-    await sendVerificationEmail(email, verificationCode);
+    await sendVerificationEmail(email, verificationCode, FRONTEND_URL);
 
     const isTestMode = !process.env.GMAIL_USER;
     const msg = isTestMode 
-      ? `Kayıt başarılı! (Test Modu Aktif. Doğrulama Kodunuz: ${verificationCode})` 
-      : "Kayıt başarılı! Lütfen e-postanıza gönderilen onay kodunu girin.";
+      ? `Kayıt başarılı! (Test Modu Aktif. Doğrulama Linki: ${FRONTEND_URL}/verify-email?token=${verificationCode})` 
+      : "Kayıt başarılı! Lütfen e-postanıza gönderilen onay linkine tıklayın.";
 
     res.json({ success: true, message: msg });
   } catch (err) {
@@ -256,24 +258,23 @@ app.post("/api/auth/register", async (req, res) => {
   }
 });
 
-// 2. Verify OTP
+// 2. Verify Token (Magic Link)
 app.post("/api/auth/verify", async (req, res) => {
   try {
-    const { email, code } = req.body;
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ success: false, message: "Token eksik." });
     
-    const user = await getAsync("SELECT * FROM users WHERE email = ?", [email]);
-    if (!user) return res.status(400).json({ success: false, message: "Kullanıcı bulunamadı." });
+    const user = await getAsync("SELECT * FROM users WHERE verification_code = ?", [token]);
+    if (!user) {
+      return res.status(400).json({ success: false, message: "Geçersiz veya süresi dolmuş onay linki." });
+    }
     
-    if (user.is_verified) {
-      return res.json({ success: true, message: "Hesap zaten onaylanmış." });
-    }
-
-    if (user.verification_code !== code) {
-      return res.status(400).json({ success: false, message: "Onay kodu hatalı!" });
-    }
-
-    await runAsync("UPDATE users SET is_verified = 1, verification_code = NULL WHERE email = ?", [email]);
-    res.json({ success: true, message: "Hesabınız başarıyla onaylandı. Giriş yapabilirsiniz." });
+    await runAsync("UPDATE users SET is_verified = 1, verification_code = NULL WHERE id = ?", [user.id]);
+    
+    // Doğrulama sonrası otomatik giriş için JWT oluştur
+    const jwtToken = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '24h' });
+    
+    res.json({ success: true, message: "Hesabınız başarıyla onaylandı.", token: jwtToken });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: "Onay işlemi başarısız oldu." });
@@ -316,20 +317,19 @@ app.post("/api/auth/login", async (req, res) => {
     }
 
     if (!user.is_verified) {
-      const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const verificationCode = crypto.randomBytes(32).toString('hex');
       await runAsync("UPDATE users SET verification_code = ? WHERE id = ?", [verificationCode, user.id]);
-      await sendVerificationEmail(user.email, verificationCode);
+      await sendVerificationEmail(user.email, verificationCode, FRONTEND_URL);
       
       const isTestMode = !process.env.GMAIL_USER;
       const msg = isTestMode 
-        ? `Hesabınız onaylanmamış! (Test Modu Aktif. Yeni Doğrulama Kodunuz: ${verificationCode})` 
-        : "Hesabınız onaylanmamış! E-postanıza yeni bir onay kodu gönderdik.";
+        ? `Hesabınız onaylanmamış! (Test Modu Aktif. Yeni Doğrulama Linki: ${FRONTEND_URL}/verify-email?token=${verificationCode})` 
+        : "Hesabınız onaylanmamış! E-postanıza yeni bir onay linki gönderdik. Lütfen linke tıklayın.";
 
       return res.status(403).json({ 
         success: false, 
         message: msg,
-        needsVerification: true,
-        email: user.email
+        needsVerification: true
       });
     }
 
@@ -351,15 +351,15 @@ app.post("/api/auth/forgot-password", async (req, res) => {
       return res.status(400).json({ success: false, message: "Bu e-posta adresi sistemde kayıtlı değil." });
     }
 
-    const resetToken = Math.floor(100000 + Math.random() * 900000).toString();
+    const resetToken = crypto.randomBytes(32).toString('hex');
     await runAsync("UPDATE users SET reset_token = ? WHERE email = ?", [resetToken, email]);
     
-    await sendPasswordResetEmail(email, resetToken);
+    await sendPasswordResetEmail(email, resetToken, FRONTEND_URL);
 
     const isTestMode = !process.env.GMAIL_USER;
     const msg = isTestMode 
-      ? `Şifre sıfırlama kodu e-posta adresinize gönderildi. (Test Modu Aktif. Şifre Sıfırlama Kodunuz: ${resetToken})` 
-      : "Şifre sıfırlama kodu e-posta adresinize gönderildi.";
+      ? `Şifre sıfırlama linki e-posta adresinize gönderildi. (Test Modu Aktif. Şifre Sıfırlama Linki: ${FRONTEND_URL}/reset-password?token=${resetToken})` 
+      : "Şifre sıfırlama linki e-posta adresinize gönderildi.";
 
     res.json({ success: true, message: msg });
   } catch (err) {
@@ -371,18 +371,22 @@ app.post("/api/auth/forgot-password", async (req, res) => {
 // 5. Reset Password
 app.post("/api/auth/reset-password", async (req, res) => {
   try {
-    const { email, code, newPassword } = req.body;
+    const { token, newPassword } = req.body;
     
-    const user = await getAsync("SELECT * FROM users WHERE email = ?", [email]);
-    if (!user || user.reset_token !== code) {
-      return res.status(400).json({ success: false, message: "Geçersiz e-posta veya sıfırlama kodu." });
+    const user = await getAsync("SELECT * FROM users WHERE reset_token = ?", [token]);
+    if (!user) {
+      return res.status(400).json({ success: false, message: "Geçersiz veya süresi dolmuş sıfırlama linki." });
     }
 
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(newPassword, salt);
 
-    await runAsync("UPDATE users SET password_hash = ?, reset_token = NULL WHERE email = ?", [passwordHash, email]);
-    res.json({ success: true, message: "Şifreniz başarıyla güncellendi. Giriş yapabilirsiniz." });
+    await runAsync("UPDATE users SET password_hash = ?, reset_token = NULL WHERE id = ?", [passwordHash, user.id]);
+    
+    // Şifre değişimi sonrası otomatik giriş
+    const jwtToken = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '24h' });
+    
+    res.json({ success: true, message: "Şifreniz başarıyla güncellendi.", token: jwtToken });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: "Şifre sıfırlama işlemi başarısız oldu." });
