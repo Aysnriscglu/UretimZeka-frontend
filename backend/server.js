@@ -244,7 +244,8 @@ app.post("/api/auth/register", async (req, res) => {
       [username, email, passwordHash, verificationCode]
     );
 
-    await sendVerificationEmail(email, verificationCode, FRONTEND_URL);
+    // E-postayı arka planda gönder, isteği bekletme
+    sendVerificationEmail(email, verificationCode, FRONTEND_URL).catch(console.error);
 
     const isTestMode = !process.env.GMAIL_USER;
     const msg = isTestMode 
@@ -319,7 +320,8 @@ app.post("/api/auth/login", async (req, res) => {
     if (!user.is_verified) {
       const verificationCode = crypto.randomBytes(32).toString('hex');
       await runAsync("UPDATE users SET verification_code = ? WHERE id = ?", [verificationCode, user.id]);
-      await sendVerificationEmail(user.email, verificationCode, FRONTEND_URL);
+      // E-postayı arka planda gönder, isteği bekletme
+      sendVerificationEmail(user.email, verificationCode, FRONTEND_URL).catch(console.error);
       
       const isTestMode = !process.env.GMAIL_USER;
       const msg = isTestMode 
@@ -358,7 +360,8 @@ app.post("/api/auth/forgot-password", async (req, res) => {
     const resetToken = crypto.randomBytes(32).toString('hex');
     await runAsync("UPDATE users SET reset_token = ? WHERE id = ?", [resetToken, user.id]);
     
-    await sendPasswordResetEmail(user.email, resetToken, FRONTEND_URL);
+    // E-postayı arka planda gönder, isteği bekletme
+    sendPasswordResetEmail(user.email, resetToken, FRONTEND_URL).catch(console.error);
 
     const isTestMode = !process.env.GMAIL_USER;
     const msg = isTestMode 
