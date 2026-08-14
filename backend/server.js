@@ -344,17 +344,21 @@ app.post("/api/auth/login", async (req, res) => {
 // 4. Forgot Password
 app.post("/api/auth/forgot-password", async (req, res) => {
   try {
-    const { email } = req.body;
-    const user = await getAsync("SELECT * FROM users WHERE email = ?", [email]);
+    const { loginId } = req.body; // loginId can be email or username
+    if (!loginId) {
+      return res.status(400).json({ success: false, message: "Lütfen kullanıcı adı veya e-posta girin." });
+    }
+
+    const user = await getAsync("SELECT * FROM users WHERE email = ? OR username = ?", [loginId, loginId]);
     
     if (!user) {
-      return res.status(400).json({ success: false, message: "Bu e-posta adresi sistemde kayıtlı değil." });
+      return res.status(400).json({ success: false, message: "Bu bilgilere ait hesap bulunamadı." });
     }
 
     const resetToken = crypto.randomBytes(32).toString('hex');
-    await runAsync("UPDATE users SET reset_token = ? WHERE email = ?", [resetToken, email]);
+    await runAsync("UPDATE users SET reset_token = ? WHERE id = ?", [resetToken, user.id]);
     
-    await sendPasswordResetEmail(email, resetToken, FRONTEND_URL);
+    await sendPasswordResetEmail(user.email, resetToken, FRONTEND_URL);
 
     const isTestMode = !process.env.GMAIL_USER;
     const msg = isTestMode 

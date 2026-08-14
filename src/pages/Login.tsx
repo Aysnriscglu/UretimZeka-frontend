@@ -87,7 +87,7 @@ export default function Login() {
       const res = await fetch(`${BACKEND_URL}/api/auth/forgot-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: forgotEmail })
+        body: JSON.stringify({ loginId: forgotEmail })
       });
       const data = await res.json();
       if (data.success) {
@@ -102,6 +102,11 @@ export default function Login() {
     } catch (err) {
       setError("Bağlantı hatası.");
     }
+  };
+
+  const handleOpenForgot = () => {
+    setForgotEmail(username || "");
+    setOpenForgot(true);
   };
 
   return (
@@ -147,7 +152,7 @@ export default function Login() {
             {!needsVerification && (
               <Box sx={{ textAlign: "center", mt: -1, display: 'flex', flexDirection: 'column', gap: 1 }}>
                 {isLogin && (
-                  <Typography component="span" onClick={() => setOpenForgot(true)} sx={{ color: "#94a3b8", cursor: "pointer", fontSize: "0.85rem", transition: "color 0.2s", "&:hover": { color: "#38bdf8", textDecoration: "underline" } }}>
+                  <Typography component="span" onClick={handleOpenForgot} sx={{ color: "#94a3b8", cursor: "pointer", fontSize: "0.85rem", transition: "color 0.2s", "&:hover": { color: "#38bdf8", textDecoration: "underline" } }}>
                     Şifremi Unuttum
                   </Typography>
                 )}
@@ -178,8 +183,7 @@ export default function Login() {
           {error && <Typography color="#ef4444" variant="body2" mb={2}>{error}</Typography>}
           {success && <Typography color="#22c55e" variant="body2" mb={2}>{success}</Typography>}
           
-          <TextField autoFocus margin="dense" label="Kayıtlı E-posta Adresi" type="email" fullWidth variant="outlined" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} InputLabelProps={{ style: { color: '#94a3b8' } }} sx={{ input: { color: 'white' }, "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.2)" } }} />
-        </DialogContent>
+          <TextField autoFocus margin="dense" label="Kullanıcı Adı veya E-posta" type="text" fullWidth variant="outlined" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} InputLabelProps={{ style: { color: '#94a3b8' } }} sx={{ input: { color: 'white' }, "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.2)" } }} />        </DialogContent>
         <DialogActions sx={{ p: 2, pt: 0 }}>
           <Button onClick={() => setOpenForgot(false)} sx={{ color: '#94a3b8' }}>İptal</Button>
           <Button onClick={handleForgotPassword} variant="contained" sx={{ backgroundColor: '#0284c7' }}>
