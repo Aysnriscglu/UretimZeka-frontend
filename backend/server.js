@@ -244,7 +244,12 @@ app.post("/api/auth/register", async (req, res) => {
 
     await sendVerificationEmail(email, verificationCode);
 
-    res.json({ success: true, message: "Kayıt başarılı! Lütfen e-postanıza gönderilen onay kodunu girin." });
+    const isTestMode = !process.env.GMAIL_USER;
+    const msg = isTestMode 
+      ? `Kayıt başarılı! (Test Modu Aktif. Doğrulama Kodunuz: ${verificationCode})` 
+      : "Kayıt başarılı! Lütfen e-postanıza gönderilen onay kodunu girin.";
+
+    res.json({ success: true, message: msg });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: "Kayıt işlemi başarısız oldu." });
@@ -314,9 +319,15 @@ app.post("/api/auth/login", async (req, res) => {
       const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
       await runAsync("UPDATE users SET verification_code = ? WHERE id = ?", [verificationCode, user.id]);
       await sendVerificationEmail(user.email, verificationCode);
+      
+      const isTestMode = !process.env.GMAIL_USER;
+      const msg = isTestMode 
+        ? `Hesabınız onaylanmamış! (Test Modu Aktif. Yeni Doğrulama Kodunuz: ${verificationCode})` 
+        : "Hesabınız onaylanmamış! E-postanıza yeni bir onay kodu gönderdik.";
+
       return res.status(403).json({ 
         success: false, 
-        message: "Hesabınız onaylanmamış! E-postanıza yeni bir onay kodu gönderdik.",
+        message: msg,
         needsVerification: true,
         email: user.email
       });
@@ -344,7 +355,13 @@ app.post("/api/auth/forgot-password", async (req, res) => {
     await runAsync("UPDATE users SET reset_token = ? WHERE email = ?", [resetToken, email]);
     
     await sendPasswordResetEmail(email, resetToken);
-    res.json({ success: true, message: "Şifre sıfırlama kodu e-posta adresinize gönderildi." });
+
+    const isTestMode = !process.env.GMAIL_USER;
+    const msg = isTestMode 
+      ? `Şifre sıfırlama kodu e-posta adresinize gönderildi. (Test Modu Aktif. Şifre Sıfırlama Kodunuz: ${resetToken})` 
+      : "Şifre sıfırlama kodu e-posta adresinize gönderildi.";
+
+    res.json({ success: true, message: msg });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: "İşlem başarısız." });
