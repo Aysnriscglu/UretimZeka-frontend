@@ -16,20 +16,14 @@ export default function Login() {
   const [isLogin, setIsLogin] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const navigate = useNavigate();
-
-  // OTP State
-  const [needsOtp, setNeedsOtp] = useState(false);
-  const [otpCode, setOtpCode] = useState("");
-
-  // Forgot Password Modal State
+  const [needsVerification, setNeedsVerification] = useState(false);
+  
   const [openForgot, setOpenForgot] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
-  const [resetCode, setResetCode] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [forgotStep, setForgotStep] = useState(1); // 1: Email, 2: Code & New Password
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
-  // Otomatik URL Ayarý: Eðer lokalde çalýþýyorsa localhost:5000, eðer Vercel'de ise direkt Railway linkine baðlanýr.
+  // Otomatik URL Ayarı: Eğer lokalde çalışıyorsa localhost:5000, eğer Vercel'de ise direkt Railway linkine bağlanır.
   const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   const BACKEND_URL = isLocal 
     ? "http://localhost:5000" 
@@ -39,30 +33,8 @@ export default function Login() {
     e.preventDefault();
     setError("");
     setSuccess("");
-
-    if (needsOtp) {
-      // Doğrulama aşaması
-      try {
-        const res = await fetch(`${BACKEND_URL}/api/auth/verify`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: isLogin ? username : email, code: otpCode })
-        });
-        const data = await res.json();
-        if (data.success) {
-          setSuccess("Hesap onaylandı! Giriş yapılıyor...");
-          setNeedsOtp(false);
-          setIsLogin(true);
-          // Auto login process after verification can be implemented here, 
-          // or they can just type password again.
-        } else {
-          setError(data.message);
-        }
-      } catch (err) {
-        setError("Sunucuya bağlanılamadı.");
-      }
-      return;
-    }
+    if (isLoading) return;
+    setIsLoading(true);
 
     if (isLogin) {
       try {
@@ -78,13 +50,14 @@ export default function Login() {
           navigate("/");
         } else if (data.needsVerification) {
           setError(data.message);
-          setEmail(data.email);
-          setNeedsOtp(true);
+          setNeedsVerification(true);
         } else {
           setError(data.message);
         }
       } catch (err) {
         setError("Sunucuya bağlanılamadı.");
+      } finally {
+        setIsLoading(false);
       }
     } else {
       try {
@@ -94,14 +67,16 @@ export default function Login() {
           body: JSON.stringify({ username, email, password })
         });
         const data = await res.json();
-        if (res.ok) {
+        if (res.ok || data.success) {
           setSuccess(data.message);
-          setNeedsOtp(true);
+          setNeedsVerification(true);
         } else {
           setError(data.message);
         }
       } catch (err) {
         setError("Sunucuya bağlanılamadı.");
+      } finally {
+        setIsLoading(false);
       }
     }
   };
@@ -117,31 +92,10 @@ export default function Login() {
       const data = await res.json();
       if (data.success) {
         setSuccess(data.message);
-        setForgotStep(2);
-      } else {
-        setError(data.message);
-      }
-    } catch (err) {
-      setError("Bağlantı hatası.");
-    }
-  };
-
-  const handleResetPassword = async () => {
-    setError(""); setSuccess("");
-    try {
-      const res = await fetch(`${BACKEND_URL}/api/auth/reset-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: forgotEmail, code: resetCode, newPassword })
-      });
-      const data = await res.json();
-      if (data.success) {
-        setSuccess(data.message);
         setTimeout(() => {
           setOpenForgot(false);
-          setForgotStep(1);
           setSuccess("");
-        }, 2000);
+        }, 3000);
       } else {
         setError(data.message);
       }
@@ -164,14 +118,14 @@ export default function Login() {
           <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 3.5 }}>
             <Box textAlign="center" mb={1}>
               <Typography variant="h4" component="h1" fontWeight="800" sx={{ background: "linear-gradient(135deg, #38bdf8 0%, #818cf8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", mb: 1, letterSpacing: "-0.5px" }}>
-                {needsOtp ? "Hesap Onayı" : (isLogin ? "Opex'e Hoşgeldiniz" : "Yeni Hesap Oluşturun")}
+                {needsVerification ? "Hesap Onayı Bekleniyor" : (isLogin ? "Opex'e Hoşgeldiniz" : "Yeni Hesap Oluşturun")}
               </Typography>
               <Typography variant="body2" color="#94a3b8" sx={{ fontSize: "0.95rem" }}>
-                {needsOtp ? "E-postanıza gönderilen onay kodunu giriniz" : (isLogin ? "Devam etmek için lütfen hesap bilgilerinizi girin" : "Sisteme katılmak için bilgilerinizi doldurun")}
+                {needsVerification ? "Lütfen e-posta adresinize gönderdiğimiz onay linkine tıklayın." : (isLogin ? "Devam etmek için lütfen hesap bilgilerinizi girin" : "Sisteme katılmak için bilgilerinizi doldurun")}
               </Typography>
             </Box>
 
-            {!needsOtp ? (
+            {!needsVerification ? (
               <>
                 <TextField placeholder={isLogin ? "Kullanıcı Adı veya E-posta" : "Kullanıcı Adı"} variant="outlined" fullWidth value={username} onChange={(e) => setUsername(e.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><User color="#64748b" size={20} /></InputAdornment>, style: { color: "white", borderRadius: 12, paddingLeft: 8 }, sx: { backgroundColor: "rgba(15, 23, 42, 0.8)", "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.08)" }, "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.15)" }, "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#38bdf8" } } }} />
                 {!isLogin && (
@@ -179,18 +133,18 @@ export default function Login() {
                 )}
                 <TextField placeholder="Şifre" type="password" variant="outlined" fullWidth value={password} onChange={(e) => setPassword(e.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><Lock color="#64748b" size={20} /></InputAdornment>, style: { color: "white", borderRadius: 12, paddingLeft: 8 }, sx: { backgroundColor: "rgba(15, 23, 42, 0.8)", "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.08)" }, "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.15)" }, "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#38bdf8" } } }} />
               </>
-            ) : (
-              <TextField placeholder="6 Haneli Onay Kodu" variant="outlined" fullWidth value={otpCode} onChange={(e) => setOtpCode(e.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><KeyRound color="#64748b" size={20} /></InputAdornment>, style: { color: "white", borderRadius: 12, paddingLeft: 8, textAlign: 'center', letterSpacing: '4px', fontSize: '1.2rem' }, sx: { backgroundColor: "rgba(15, 23, 42, 0.8)", "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.08)" }, "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.15)" }, "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#38bdf8" } } }} />
-            )}
+            ) : null}
 
             {error && <Typography color="#ef4444" variant="body2" textAlign="center" fontWeight="500">{error}</Typography>}
             {success && <Typography color="#22c55e" variant="body2" textAlign="center" fontWeight="500">{success}</Typography>}
 
-            <Button type="submit" variant="contained" fullWidth size="large" sx={{ mt: 1, py: 1.8, background: "linear-gradient(135deg, #0284c7 0%, #2563eb 100%)", fontSize: "1.05rem", textTransform: "none", fontWeight: "700", borderRadius: 3, boxShadow: "0 10px 20px -5px rgba(2, 132, 199, 0.4)", "&:hover": { background: "linear-gradient(135deg, #0369a1 0%, #1d4ed8 100%)", transform: "translateY(-2px)", boxShadow: "0 15px 25px -5px rgba(2, 132, 199, 0.5)" }, transition: "all 0.2s ease-in-out" }}>
-              {needsOtp ? "Onayla" : (isLogin ? "Giriş Yap" : "Kayıt Ol")}
-            </Button>
+            {!needsVerification && (
+              <Button disabled={isLoading} type="submit" variant="contained" fullWidth size="large" sx={{ mt: 1, py: 1.8, background: "linear-gradient(135deg, #0284c7 0%, #2563eb 100%)", fontSize: "1.05rem", textTransform: "none", fontWeight: "700", borderRadius: 3, boxShadow: "0 10px 20px -5px rgba(2, 132, 199, 0.4)", "&:hover": { background: "linear-gradient(135deg, #0369a1 0%, #1d4ed8 100%)", transform: "translateY(-2px)", boxShadow: "0 15px 25px -5px rgba(2, 132, 199, 0.5)" }, transition: "all 0.2s ease-in-out" }}>
+                {isLoading ? "Yükleniyor..." : (isLogin ? "Giriş Yap" : "Kayıt Ol")}
+              </Button>
+            )}
 
-            {!needsOtp && (
+            {!needsVerification && (
               <Box sx={{ textAlign: "center", mt: -1, display: 'flex', flexDirection: 'column', gap: 1 }}>
                 {isLogin && (
                   <Typography component="span" onClick={() => setOpenForgot(true)} sx={{ color: "#94a3b8", cursor: "pointer", fontSize: "0.85rem", transition: "color 0.2s", "&:hover": { color: "#38bdf8", textDecoration: "underline" } }}>
@@ -206,10 +160,10 @@ export default function Login() {
               </Box>
             )}
             
-            {needsOtp && (
+            {needsVerification && (
               <Box sx={{ textAlign: "center", mt: -1 }}>
-                <Typography component="span" onClick={() => {setNeedsOtp(false); setError(""); setSuccess("")}} sx={{ color: "#94a3b8", cursor: "pointer", fontSize: "0.85rem", transition: "color 0.2s", "&:hover": { color: "#38bdf8", textDecoration: "underline" } }}>
-                  Geri Dön
+                <Typography component="span" onClick={() => {setNeedsVerification(false); setError(""); setSuccess("")}} sx={{ color: "#94a3b8", cursor: "pointer", fontSize: "0.85rem", transition: "color 0.2s", "&:hover": { color: "#38bdf8", textDecoration: "underline" } }}>
+                  Giriş Ekranına Dön
                 </Typography>
               </Box>
             )}
@@ -224,19 +178,12 @@ export default function Login() {
           {error && <Typography color="#ef4444" variant="body2" mb={2}>{error}</Typography>}
           {success && <Typography color="#22c55e" variant="body2" mb={2}>{success}</Typography>}
           
-          {forgotStep === 1 ? (
-            <TextField autoFocus margin="dense" label="Kayıtlı E-posta Adresi" type="email" fullWidth variant="outlined" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} InputLabelProps={{ style: { color: '#94a3b8' } }} sx={{ input: { color: 'white' }, "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.2)" } }} />
-          ) : (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-              <TextField label="Sıfırlama Kodu" fullWidth variant="outlined" value={resetCode} onChange={(e) => setResetCode(e.target.value)} InputLabelProps={{ style: { color: '#94a3b8' } }} sx={{ input: { color: 'white' }, "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.2)" } }} />
-              <TextField label="Yeni Şifre" type="password" fullWidth variant="outlined" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} InputLabelProps={{ style: { color: '#94a3b8' } }} sx={{ input: { color: 'white' }, "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.2)" } }} />
-            </Box>
-          )}
+          <TextField autoFocus margin="dense" label="Kayıtlı E-posta Adresi" type="email" fullWidth variant="outlined" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} InputLabelProps={{ style: { color: '#94a3b8' } }} sx={{ input: { color: 'white' }, "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.2)" } }} />
         </DialogContent>
         <DialogActions sx={{ p: 2, pt: 0 }}>
           <Button onClick={() => setOpenForgot(false)} sx={{ color: '#94a3b8' }}>İptal</Button>
-          <Button onClick={forgotStep === 1 ? handleForgotPassword : handleResetPassword} variant="contained" sx={{ backgroundColor: '#0284c7' }}>
-            {forgotStep === 1 ? "Kod Gönder" : "Şifreyi Yenile"}
+          <Button onClick={handleForgotPassword} variant="contained" sx={{ backgroundColor: '#0284c7' }}>
+            Link Gönder
           </Button>
         </DialogActions>
       </Dialog>
