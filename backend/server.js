@@ -667,38 +667,6 @@ app.get(/(.*)/, (req, res) => {
   res.sendFile(path.join(__dirname, "../dist/index.html"));
 });
 
-app.get("/api/auth/test-mail", async (req, res) => {
-  try {
-    const to = process.env.GMAIL_USER || "test@ethereal.email";
-    if (!process.env.GMAIL_USER) {
-      return res.json({ success: false, message: "GMAIL_USER tanımlı değil, Ethereal test hesabı kullanılıyor olabilir." });
-    }
-    
-    // Create a temporary transporter to test credentials directly and get immediate error
-    const nodemailer = require("nodemailer");
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_PASS,
-      },
-    });
-
-    await transporter.verify(); // Test connection and authentication
-    
-    await transporter.sendMail({
-      from: '"Test" <test@opexdijital.com>',
-      to: to,
-      subject: "Test E-postası",
-      text: "Bu bir test e-postasıdır. Eğer bunu görüyorsanız şifre ve mail ayarlarınız DOĞRU demektir!"
-    });
-
-    res.json({ success: true, message: "Test e-postası başarıyla gönderildi! Gelen kutunuzu kontrol edin." });
-  } catch (err) {
-    res.json({ success: false, error: err.message, stack: err.stack });
-  }
-});
-
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
