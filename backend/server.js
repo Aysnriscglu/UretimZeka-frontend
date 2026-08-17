@@ -55,8 +55,8 @@ const authLimiter = rateLimit({
   max: 15,
   message: { error: "Çok fazla giriş denemesi yaptınız. Lütfen 15 dakika sonra tekrar deneyin." }
 });
-app.use('/api/login', authLimiter);
-app.use('/api/register', authLimiter);
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
 
 // Derlenmiş frontend dosyalarını servis et (Railway production)
 app.use(express.static(path.join(__dirname, "../dist")));
