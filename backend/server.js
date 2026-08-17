@@ -18,7 +18,7 @@ import { sendVerificationEmail, sendPasswordResetEmail } from "./mailer.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "opex-super-secret-key-1234";
 const FRONTEND_URL = process.env.FRONTEND_URL || 
-  (process.env.NODE_ENV === "production" ? "https://uretimzeka-frontend-production.up.railway.app" : "http://localhost:5173");
+  (process.env.NODE_ENV === "production" ? "https://opexdijital.up.railway.app" : "http://localhost:5173");
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
