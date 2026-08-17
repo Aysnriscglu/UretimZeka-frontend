@@ -49,13 +49,13 @@ export default function Login() {
           localStorage.setItem("token", data.token);
           navigate("/");
         } else if (data.needsVerification) {
-          setError(data.message);
+          setError(data.message || data.error);
           setNeedsVerification(true);
         } else {
-          setError(data.message);
+          setError(data.message || data.error || "Giriş yapılamadı.");
         }
       } catch (err) {
-        setError("Sunucuya bağlanılamadı.");
+        setError("Sunucuya bağlanılamadı veya çok fazla istek yapıldı.");
       } finally {
         setIsLoading(false);
       }
@@ -68,13 +68,13 @@ export default function Login() {
         });
         const data = await res.json();
         if (res.ok || data.success) {
-          setSuccess(data.message);
+          setSuccess(data.message || data.error);
           setNeedsVerification(true);
         } else {
-          setError(data.message);
+          setError(data.message || data.error || "Kayıt yapılamadı.");
         }
       } catch (err) {
-        setError("Sunucuya bağlanılamadı.");
+        setError("Sunucuya bağlanılamadı veya çok fazla istek yapıldı.");
       } finally {
         setIsLoading(false);
       }
@@ -91,16 +91,16 @@ export default function Login() {
       });
       const data = await res.json();
       if (data.success) {
-        setSuccess(data.message);
+        setSuccess(data.message || data.error);
         setTimeout(() => {
           setOpenForgot(false);
           setSuccess("");
         }, 3000);
       } else {
-        setError(data.message);
+        setError(data.message || data.error || "Şifre sıfırlama talebi gönderilemedi.");
       }
     } catch (err) {
-      setError("Bağlantı hatası.");
+      setError("Bağlantı hatası veya çok fazla istek yapıldı.");
     }
   };
 
