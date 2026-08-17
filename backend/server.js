@@ -240,7 +240,7 @@ app.post("/api/auth/register", async (req, res) => {
     const verificationCode = crypto.randomBytes(32).toString('hex'); // 64 karakterli token
 
     await runAsync(
-      "INSERT INTO users (username, email, password_hash, verification_code, is_verified, failed_login_attempts) VALUES (?, ?, ?, ?, 1, 0)",
+      "INSERT INTO users (username, email, password_hash, verification_code, is_verified, failed_login_attempts) VALUES (?, ?, ?, ?, 0, 0)",
       [username, email, passwordHash, verificationCode]
     );
 
