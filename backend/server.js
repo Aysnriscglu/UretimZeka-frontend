@@ -13,6 +13,8 @@ import OpenAI from "openai";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import db, { runAsync, getAsync, allAsync } from "./db.js";
 import { sendVerificationEmail, sendPasswordResetEmail } from "./mailer.js";
 
@@ -25,12 +27,36 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
+// Güvenlik: HTTP başlıklarını (Header) güvenli hale getirme (XSS, Clickjacking vb. korumaları)
+app.use(helmet({
+  contentSecurityPolicy: false, // Vite'in ürettiği satır içi scriptlere (inline scripts) engel olmaması için kapalı
+}));
+
 app.use(cors({
   origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 }));
 app.use(express.json());
+
+// Güvenlik: Genel API limitörü (DDoS Koruması)
+// Aynı IP adresinden 15 dakika içinde en fazla 200 istek yapılabilir
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 dakika
+  max: 200,
+  message: { error: "Çok fazla işlem yaptınız. Lütfen 15 dakika sonra tekrar deneyin." }
+});
+app.use('/api/', apiLimiter);
+
+// Güvenlik: Sıkı Limitör (Brute Force Koruması) - Sadece Giriş ve Kayıt için
+// Aynı IP adresinden 15 dakika içinde en fazla 15 hatalı/doğru giriş yapılabilir
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 15,
+  message: { error: "Çok fazla giriş denemesi yaptınız. Lütfen 15 dakika sonra tekrar deneyin." }
+});
+app.use('/api/login', authLimiter);
+app.use('/api/register', authLimiter);
 
 // Derlenmiş frontend dosyalarını servis et (Railway production)
 app.use(express.static(path.join(__dirname, "../dist")));
