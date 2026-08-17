@@ -102,7 +102,7 @@ export default function Admin() {
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: '#0f172a', pt: { xs: 4, md: 8 }, pb: 8, px: { xs: 2, md: 4 } }}>
-      <Box sx={{ maxWidth: 1200, mx: 'auto', animation: \`\${fadeIn} 0.5s ease-out\` }}>
+      <Box sx={{ maxWidth: 1200, mx: 'auto', animation: `${fadeIn} 0.5s ease-out` }}>
         
         {/* Header */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, flexWrap: 'wrap', gap: 2 }}>
