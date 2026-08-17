@@ -27,7 +27,7 @@ export default function Login() {
   const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   const BACKEND_URL = isLocal 
     ? "http://localhost:5000" 
-    : "https://uretimzeka-frontend-production.up.railway.app";
+    : "https://opexdijital.up.railway.app";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

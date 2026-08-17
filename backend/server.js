@@ -27,6 +27,9 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
+// Railway gibi bulut servislerinde IP adreslerini doğru okuyabilmek için
+app.set('trust proxy', 1);
+
 // Güvenlik: HTTP başlıklarını (Header) güvenli hale getirme (XSS, Clickjacking vb. korumaları)
 app.use(helmet({
   contentSecurityPolicy: false, // Vite'in ürettiği satır içi scriptlere (inline scripts) engel olmaması için kapalı
