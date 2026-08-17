@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Button, TextField, Typography, Paper, InputAdornment, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
-import { User, Lock, Mail, KeyRound } from "lucide-react";
+import { Box, Button, TextField, Typography, Paper, InputAdornment, IconButton, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
+import { User, Lock, Mail, Eye, EyeOff } from "lucide-react";
 import { keyframes } from "@emotion/react";
 
 const fadeIn = keyframes`
@@ -17,6 +17,7 @@ export default function Login() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [needsVerification, setNeedsVerification] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   
   const [openForgot, setOpenForgot] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
@@ -136,7 +137,30 @@ export default function Login() {
                 {!isLogin && (
                   <TextField placeholder="E-posta Adresi" type="email" variant="outlined" fullWidth value={email} onChange={(e) => setEmail(e.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><Mail color="#64748b" size={20} /></InputAdornment>, style: { color: "white", borderRadius: 12, paddingLeft: 8 }, sx: { backgroundColor: "rgba(15, 23, 42, 0.8)", "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.08)" }, "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.15)" }, "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#38bdf8" } } }} />
                 )}
-                <TextField placeholder="Şifre" type="password" variant="outlined" fullWidth value={password} onChange={(e) => setPassword(e.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><Lock color="#64748b" size={20} /></InputAdornment>, style: { color: "white", borderRadius: 12, paddingLeft: 8 }, sx: { backgroundColor: "rgba(15, 23, 42, 0.8)", "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.08)" }, "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.15)" }, "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#38bdf8" } } }} />
+                <TextField 
+                  placeholder="Şifre" 
+                  type={showPassword ? "text" : "password"} 
+                  variant="outlined" 
+                  fullWidth 
+                  value={password} 
+                  onChange={(e) => setPassword(e.target.value)} 
+                  InputProps={{ 
+                    startAdornment: <InputAdornment position="start"><Lock color="#64748b" size={20} /></InputAdornment>, 
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          onClick={() => setShowPassword(!showPassword)}
+                          edge="end"
+                          sx={{ color: "#64748b" }}
+                        >
+                          {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                    style: { color: "white", borderRadius: 12, paddingLeft: 8 }, 
+                    sx: { backgroundColor: "rgba(15, 23, 42, 0.8)", "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.08)" }, "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.15)" }, "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#38bdf8" } } 
+                  }} 
+                />
               </>
             ) : null}
 
