@@ -52,10 +52,10 @@ const apiLimiter = rateLimit({
 app.use('/api/', apiLimiter);
 
 // Güvenlik: Sıkı Limitör (Brute Force Koruması) - Sadece Giriş ve Kayıt için
-// Aynı IP adresinden 15 dakika içinde en fazla 15 hatalı/doğru giriş yapılabilir
+// Sunumda kolay göstermek için limiti 5'e düşürdük
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 15,
+  max: 5,
   message: { error: "Çok fazla giriş denemesi yaptınız. Lütfen 15 dakika sonra tekrar deneyin." }
 });
 app.use('/api/auth/login', authLimiter);
