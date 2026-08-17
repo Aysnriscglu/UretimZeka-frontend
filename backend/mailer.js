@@ -48,7 +48,7 @@ export const sendVerificationEmail = async (to, token, frontendUrl) => {
       </div>
       <h2 style="color: #334155; font-size: 22px; margin-bottom: 15px; font-weight: 600;">Aramıza Hoş Geldiniz!</h2>
       <p style="color: #64748b; font-size: 16px; line-height: 1.6; margin-bottom: 30px;">Hesabınızı güvenle kullanmaya başlamak için e-posta adresinizi doğrulamanız gerekmektedir. Lütfen aşağıdaki butona tıklayarak işleminizi tamamlayın.</p>
-      <a href="${link}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);">Hesabımı Onaylıyorum</a>
+      <a href="${link}" style="display: inline-block; padding: 14px 32px; background-color: #2563eb; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);">Hesabımı Onaylıyorum</a>
       <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #f1f5f9;">
         <p style="font-size: 13px; color: #94a3b8; line-height: 1.5; margin: 0;">Eğer butona tıklayamıyorsanız, aşağıdaki linki kopyalayıp tarayıcınıza yapıştırın:<br/>
         <a href="${link}" style="color: #38bdf8; word-break: break-all;">${link}</a></p>
@@ -68,7 +68,7 @@ export const sendPasswordResetEmail = async (to, resetToken, frontendUrl) => {
       </div>
       <h2 style="color: #334155; font-size: 22px; margin-bottom: 15px; font-weight: 600;">Şifre Sıfırlama Talebi</h2>
       <p style="color: #64748b; font-size: 16px; line-height: 1.6; margin-bottom: 30px;">Hesabınız için bir şifre sıfırlama talebi aldık. Yeni şifrenizi belirlemek için aşağıdaki butona tıklayabilirsiniz. Eğer bu talebi siz yapmadıysanız bu e-postayı dikkate almayınız.</p>
-      <a href="${link}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);">Yeni Şifre Belirle</a>
+      <a href="${link}" style="display: inline-block; padding: 14px 32px; background-color: #dc2626; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);">Yeni Şifre Belirle</a>
       <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #f1f5f9;">
         <p style="font-size: 13px; color: #94a3b8; line-height: 1.5; margin: 0;">Eğer butona tıklayamıyorsanız, aşağıdaki linki kopyalayıp tarayıcınıza yapıştırın:<br/>
         <a href="${link}" style="color: #f87171; word-break: break-all;">${link}</a></p>
