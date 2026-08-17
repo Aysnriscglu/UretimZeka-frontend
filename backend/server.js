@@ -488,11 +488,26 @@ app.get("/api/ai/status", async (req, res) => {
   });
 });
 
-// HIZLI ÇÖZÜM: Admin kullanıcısını silmek için geçici bir rota
-app.get("/api/reset-admin", async (req, res) => {
+// HIZLI ÇÖZÜM: Tüm veritabanını sıfırlamak için geçici bir rota
+app.get("/api/reset-database", async (req, res) => {
   try {
-    await runAsync("DELETE FROM users WHERE username = 'admin'");
-    res.send("Admin hesabı veritabanından tamamen silindi! Lütfen geri dönüp yeniden Kayıt Olun.");
+    await runAsync("DROP TABLE IF EXISTS users");
+    
+    await runAsync(`
+        CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            username TEXT UNIQUE NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            is_verified INTEGER DEFAULT 0,
+            verification_code TEXT,
+            reset_token TEXT,
+            failed_login_attempts INTEGER DEFAULT 0,
+            locked_until TIMESTAMP
+        )
+    `);
+
+    res.send("Veritabanı (Users tablosu) tamamen SİLİNDİ ve SIFIRDAN TERTEMİZ oluşturuldu! Lütfen ana siteye dönüp yeniden Kayıt Olun.");
   } catch (err) {
     res.send("Hata: " + err.message);
   }
