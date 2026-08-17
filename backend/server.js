@@ -488,6 +488,16 @@ app.get("/api/ai/status", async (req, res) => {
   });
 });
 
+// HIZLI ÇÖZÜM: Admin kullanıcısını silmek için geçici bir rota
+app.get("/api/reset-admin", async (req, res) => {
+  try {
+    await runAsync("DELETE FROM users WHERE username = 'admin'");
+    res.send("Admin hesabı veritabanından tamamen silindi! Lütfen geri dönüp yeniden Kayıt Olun.");
+  } catch (err) {
+    res.send("Hata: " + err.message);
+  }
+});
+
 app.post("/api/ai", async (req, res) => {
   try {
     console.log("📩 AI isteği geldi.");
