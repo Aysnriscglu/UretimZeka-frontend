@@ -13,7 +13,7 @@ import OpenAI from "openai";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
-import db, { runAsync, getAsync } from "./db.js";
+import db, { runAsync, getAsync, allAsync } from "./db.js";
 import { sendVerificationEmail, sendPasswordResetEmail } from "./mailer.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "opex-super-secret-key-1234";
@@ -377,26 +377,61 @@ app.post("/api/auth/forgot-password", async (req, res) => {
 
 // 5. Reset Password
 app.post("/api/auth/reset-password", async (req, res) => {
+  const { token, newPassword } = req.body;
+  
+  if (!token || !newPassword) {
+    return res.status(400).json({ success: false, message: "Token ve yeni şifre gereklidir." });
+  }
+  
   try {
-    const { token, newPassword } = req.body;
-    
-    const user = await getAsync("SELECT * FROM users WHERE reset_token = ?", [token]);
+    const user = await getAsync("SELECT id FROM users WHERE reset_token = ?", [token]);
     if (!user) {
       return res.status(400).json({ success: false, message: "Geçersiz veya süresi dolmuş sıfırlama linki." });
     }
-
-    const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(newPassword, salt);
-
-    await runAsync("UPDATE users SET password_hash = ?, reset_token = NULL WHERE id = ?", [passwordHash, user.id]);
     
-    // Şifre değişimi sonrası otomatik giriş
-    const jwtToken = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '24h' });
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await runAsync(
+      "UPDATE users SET password_hash = ?, reset_token = NULL, failed_login_attempts = 0, locked_until = NULL WHERE id = ?",
+      [hashedPassword, user.id]
+    );
     
-    res.json({ success: true, message: "Şifreniz başarıyla güncellendi.", token: jwtToken });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: "Şifre sıfırlama işlemi başarısız oldu." });
+    res.json({ success: true, message: "Şifreniz başarıyla sıfırlandı. Yeni şifrenizle giriş yapabilirsiniz." });
+  } catch (error) {
+    console.error("Şifre sıfırlama (confirm) hatası:", error);
+    res.status(500).json({ success: false, message: "Sunucu hatası, lütfen tekrar deneyin." });
+  }
+});
+
+// ADMIN ROUTES
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) return res.status(401).json({ success: false, message: "Yetkisiz erişim. Lütfen giriş yapın." });
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) return res.status(403).json({ success: false, message: "Oturum süresi dolmuş veya geçersiz." });
+    req.user = user;
+    next();
+  });
+};
+
+app.get("/api/admin/users", authenticateToken, async (req, res) => {
+  try {
+    // Check if the current user is 'admin'
+    const user = await getAsync("SELECT username FROM users WHERE id = ?", [req.user.id]);
+    
+    if (!user || user.username !== 'admin') {
+      return res.status(403).json({ success: false, message: "Bu sayfayı görüntüleme yetkiniz yok. Sadece 'admin' hesabı erişebilir." });
+    }
+    
+    // Fetch all users (exclude password hashes)
+    const users = await allAsync("SELECT id, username, email, is_verified, locked_until FROM users ORDER BY id DESC");
+    
+    res.json({ success: true, users });
+  } catch (error) {
+    console.error("Admin user fetch hatası:", error);
+    res.status(500).json({ success: false, message: "Kullanıcılar getirilirken hata oluştu." });
   }
 });
 

@@ -99,5 +99,19 @@ export const getAsync = async (sql, params = []) => {
     }
 };
 
+export const allAsync = async (sql, params = []) => {
+    if (usePostgres) {
+        const res = await pool.query(formatSql(sql), params);
+        return res.rows;
+    } else {
+        return new Promise((resolve, reject) => {
+            sqliteDb.all(sql, params, (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows);
+            });
+        });
+    }
+};
+
 export default usePostgres ? pool : sqliteDb;
 
