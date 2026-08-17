@@ -240,7 +240,7 @@ app.post("/api/auth/register", async (req, res) => {
     const verificationCode = crypto.randomBytes(32).toString('hex'); // 64 karakterli token
 
     await runAsync(
-      "INSERT INTO users (username, email, password_hash, verification_code, is_verified, failed_login_attempts) VALUES (?, ?, ?, ?, 0, 0)",
+      "INSERT INTO users (username, email, password_hash, verification_code, is_verified, failed_login_attempts) VALUES (?, ?, ?, ?, 1, 0)",
       [username, email, passwordHash, verificationCode]
     );
 
@@ -508,6 +508,16 @@ app.get("/api/reset-database", async (req, res) => {
     `);
 
     res.send("Veritabanı (Users tablosu) tamamen SİLİNDİ ve SIFIRDAN TERTEMİZ oluşturuldu! Lütfen ana siteye dönüp yeniden Kayıt Olun.");
+  } catch (err) {
+    res.send("Hata: " + err.message);
+  }
+});
+
+// HIZLI ÇÖZÜM: E-posta beklemeden herkesi onaylamak için geçici rota
+app.get("/api/force-verify", async (req, res) => {
+  try {
+    await runAsync("UPDATE users SET is_verified = 1");
+    res.send("Mükemmel! Kayıtlı olan hesabınız arka planda OTOMATİK ONAYLANDI! Lütfen ana siteye dönüp Giriş Yapmayı (Log In) deneyin.");
   } catch (err) {
     res.send("Hata: " + err.message);
   }
