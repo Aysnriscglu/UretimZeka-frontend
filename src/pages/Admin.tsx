@@ -39,7 +39,7 @@ export default function Admin() {
   const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   const BACKEND_URL = isLocal 
     ? "http://localhost:5000" 
-    : "https://opexdijital.up.railway.app";
+    : "";
 
   useEffect(() => {
     fetchUsers();
