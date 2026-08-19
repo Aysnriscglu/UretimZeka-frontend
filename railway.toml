@@ -3,4 +3,4 @@ builder = "nixpacks"
 buildCommand = "npm install --include=dev && npm run build && cd backend && npm install"
 
 [deploy]
-startCommand = "cd backend && npm start"
+startCommand = "node backend/server.js"
