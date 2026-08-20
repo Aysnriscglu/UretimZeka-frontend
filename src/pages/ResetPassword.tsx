@@ -6,7 +6,7 @@ import { Lock, CheckCircle, XCircle } from "lucide-react";
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 const BACKEND_URL = isLocal 
   ? "http://localhost:5000" 
-  : "";
+  : "https://opexdijitalweb.up.railway.app";
 
 const ResetPassword = () => {
   const [searchParams] = useSearchParams();

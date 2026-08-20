@@ -43,7 +43,7 @@ function AI() {
     setUploadStatus("Yükleniyor...");
 
     try {
-      const res = await fetch(`/api/upload`, {
+      const res = await fetch(`https://opexdijitalweb.up.railway.app/api/upload`, {
         method: "POST",
         body: formData,
       });
@@ -79,7 +79,7 @@ function AI() {
   useEffect(() => {
     async function checkStatus() {
       try {
-        const res = await fetch(`/api/ai/status`);
+        const res = await fetch(`https://opexdijitalweb.up.railway.app/api/ai/status`);
         const data = await res.json();
         if (data.provider && data.model) {
           setAiInfo({
@@ -123,7 +123,7 @@ function AI() {
     try {
 
       const response = await fetch(
-        `/api/ai`,
+        `https://opexdijitalweb.up.railway.app/api/ai`,
         {
           method: "POST",
 
