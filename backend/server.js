@@ -514,7 +514,7 @@ app.get("/api/ai/status", async (req, res) => {
     success: true,
     online: true,
     provider: "Groq",
-    model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+    model: process.env.GROQ_MODEL || "openai/gpt-oss-20b",
   });
 });
 
@@ -685,7 +685,7 @@ ${rulesText}
 
         if (groqClient) {
           console.log("🔄 LM Studio'ya bağlanılamadı. Groq sistemine geçiliyor...");
-          const modelName = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
+          const modelName = process.env.GROQ_MODEL || "openai/gpt-oss-20b";
           const completion = await groqClient.chat.completions.create({
             model: modelName,
             messages: [
@@ -706,7 +706,7 @@ ${rulesText}
         }
       }
     } else {
-      const modelName = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
+      const modelName = process.env.GROQ_MODEL || "openai/gpt-oss-20b";
       console.log(`🤖 Groq çağrılıyor -> Model: ${modelName}`);
       const completion = await groqClient.chat.completions.create({
         model: modelName,
