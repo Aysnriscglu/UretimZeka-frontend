@@ -571,7 +571,12 @@ app.post("/api/ai", async (req, res) => {
     // Uploads klasöründeki tüm Excel dosyalarını tam olarak yükle (Sınırlama yok)
     let excelDataMap = {};
     try {
-      const files = fs.readdirSync(uploadsDir).filter((f) => f.endsWith(".xlsx") || f.endsWith(".xls"));
+      let files = fs.readdirSync(uploadsDir).filter((f) => f.endsWith(".xlsx") || f.endsWith(".xls"));
+      files = files.map(f => ({ name: f, time: fs.statSync(path.join(uploadsDir, f)).mtime.getTime() }))
+                   .sort((a, b) => b.time - a.time)
+                   .slice(0, 2)
+                   .map(f => f.name);
+                   
       files.forEach((f) => {
         try {
           const wb = XLSX.readFile(path.join(uploadsDir, f));
@@ -590,7 +595,9 @@ app.post("/api/ai", async (req, res) => {
 
     // Excel verilerini akıllıca özetle ve hesapla (Data profiling)
     const excelDataSummary = Object.keys(excelDataMap).length > 0
-      ? summarizeExcelData(excelDataMap)
+      ? (summarizeExcelData(excelDataMap).length > 12000 
+          ? summarizeExcelData(excelDataMap).slice(0, 12000) + "\n\n[SİSTEM UYARISI: Veri çok uzun olduğu için kısaltıldı. Analizini bu verilere göre yap.]" 
+          : summarizeExcelData(excelDataMap))
       : "Sistemde yüklü Excel verisi bulunmamaktadır.";
 
     console.log(`📊 Yüklenen Excel Dosyaları: ${Object.keys(excelDataMap).join(", ") || "Yok"}`);
