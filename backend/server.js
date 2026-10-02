@@ -19,8 +19,7 @@ import db, { runAsync, getAsync, allAsync } from "./db.js";
 import { sendVerificationEmail, sendPasswordResetEmail } from "./mailer.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "opex-super-secret-key-1234";
-const FRONTEND_URL = process.env.FRONTEND_URL || 
-  (process.env.NODE_ENV === "production" ? "https://opexdijital.up.railway.app" : "http://localhost:5173");
+const FRONTEND_URL = process.env.FRONTEND_URL || process.env.RENDER_EXTERNAL_URL || "http://localhost:5173";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -315,7 +314,7 @@ app.post("/api/auth/verify", async (req, res) => {
 // 3. Login
 app.post("/api/auth/login", async (req, res) => {
   try {
-    const { username, password } = req.body;
+    let { username, password } = req.body; if (username) username = username.trim();
     
     const user = await getAsync("SELECT * FROM users WHERE username = ? OR email = ?", [username, username]);
     if (!user) {
@@ -376,7 +375,7 @@ app.post("/api/auth/login", async (req, res) => {
 // 4. Forgot Password
 app.post("/api/auth/forgot-password", async (req, res) => {
   try {
-    const { loginId } = req.body; // loginId can be email or username
+    let { loginId } = req.body; if (loginId) loginId = loginId.trim(); // loginId can be email or username
     if (!loginId) {
       return res.status(400).json({ success: false, message: "Lütfen kullanıcı adı veya e-posta girin." });
     }
@@ -782,7 +781,7 @@ app.get(/(.*)/, (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log("=================================");
   console.log("🚀 Backend çalışıyor");
   console.log(`🌍 Port: ${PORT}`);

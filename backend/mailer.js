@@ -66,7 +66,7 @@ export const sendPasswordResetEmail = async (to, resetToken, frontendUrl) => {
       <div style="margin-bottom: 30px;">
         <h1 style="color: #0f172a; margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px;">Opex Dijital</h1>
       </div>
-      <h2 style="color: #334155; font-size: 22px; margin-bottom: 15px; font-weight: 600;">Şifre Sıfırlama Talebi</h2>
+      <h2 style="color: #334155; font of-size: 22px; margin-bottom: 15px; font-weight: 600;">Şifre Sıfırlama Talebi</h2>
       <p style="color: #64748b; font-size: 16px; line-height: 1.6; margin-bottom: 30px;">Hesabınız için bir şifre sıfırlama talebi aldık. Yeni şifrenizi belirlemek için aşağıdaki butona tıklayabilirsiniz. Eğer bu talebi siz yapmadıysanız bu e-postayı dikkate almayınız.</p>
       <a href="${link}" style="display: inline-block; padding: 14px 32px; background-color: #dc2626; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);">Yeni Şifre Belirle</a>
       <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #f1f5f9;">
